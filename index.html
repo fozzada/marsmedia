@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mars Media - Image Overlay Tool</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Mars Media Image Overlay</h1>
+            <p>Upload an image and add our branding overlay</p>
+        </header>
+        
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-content">
+                    <svg class="upload-icon" viewBox="0 0 24 24" width="48" height="48">
+                        <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                    <p>Drag & drop an image here or click to browse</p>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-section" id="previewSection" style="display: none;">
+            <div class="image-container">
+                <canvas id="canvas"></canvas>
+            </div>
+            
+            <div class="controls">
+                <button id="downloadBtn" class="btn btn-primary">Download Image</button>
+                <button id="resetBtn" class="btn btn-secondary">Upload New Image</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
