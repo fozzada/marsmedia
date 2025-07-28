@@ -9,6 +9,11 @@ class ImageOverlay {
         this.uploadBtn = document.getElementById('uploadBtn');
         this.resetBtn = document.getElementById('resetBtn');
         
+        // Initialize Supabase
+        this.supabaseUrl = 'https://nhsucumstmojfainalvp.supabase.co';
+        this.supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oc3VjdW1zdG1vamZhaW5hbHZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2ODQzOTAsImV4cCI6MjA2OTI2MDM5MH0.0TWbFkkn9ihIUhkqT_dN8VpdjGXRIeyJIsTACPTRKUk';
+        this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseAnonKey);
+        
         // Text to overlay
         this.contractAddress = 'Cfmo6asAsZFx6GGQvAt4Ajxn8hN6vgWGpaSrjQKRpump';
         this.xHandle = '@MarsPygmySOL';
@@ -17,12 +22,6 @@ class ImageOverlay {
         // Store original file info
         this.originalFile = null;
         this.originalFormat = 'png';
-        
-        // Initialize Supabase
-        this.supabase = supabase.createClient(
-            'https://nhsucumstmojfainalvp.supabase.co',
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oc3VjdW1zdG1vamZhaW5hbHZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2ODQzOTAsImV4cCI6MjA2OTI2MDM5MH0.0TWbFkkn9ihIUhkqT_dN8VpdjGXRIeyJIsTACPTRKUk'
-        );
         
         this.initEventListeners();
     }
@@ -62,7 +61,7 @@ class ImageOverlay {
             this.downloadImage();
         });
         
-        // Upload to Supabase button
+        // Upload button
         this.uploadBtn.addEventListener('click', () => {
             this.uploadToSupabase();
         });

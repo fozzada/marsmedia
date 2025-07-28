@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mars Media - Admin Approval</title>
+    <link rel="stylesheet" href="approve.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>🔒 Mars Media Admin</h1>
+            <p>Image Approval Dashboard</p>
+            <button id="logoutBtn" class="btn btn-logout">Logout</button>
+        </header>
+
+        <!-- Login Section -->
+        <div id="loginSection" class="login-section">
+            <div class="login-card">
+                <h2>Admin Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="adminEmail">Email:</label>
+                        <input type="email" id="adminEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="adminPassword">Password:</label>
+                        <input type="password" id="adminPassword" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboardSection" class="dashboard-section" style="display: none;">
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <span class="stat-number" id="pendingCount">0</span>
+                    <span class="stat-label">Pending Images</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number" id="tagsCount">0</span>
+                    <span class="stat-label">Available Tags</span>
+                </div>
+            </div>
+
+            <div class="tags-section">
+                <h3>Available Tags</h3>
+                <div id="allTagsContainer" class="tags-container">
+                    <!-- Tags will be loaded here -->
+                </div>
+                <div class="add-tag-section">
+                    <input type="text" id="newTagInput" placeholder="Add new tag...">
+                    <button id="addTagBtn" class="btn btn-secondary">Add Tag</button>
+                </div>
+            </div>
+
+            <div class="images-section">
+                <h3>Pending Approval</h3>
+                <div id="loadingIndicator" class="loading">Loading images...</div>
+                <div id="imagesGrid" class="images-grid">
+                    <!-- Images will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Modal -->
+        <div id="imageModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" id="closeModal">&times;</span>
+                <div class="modal-header">
+                    <h3 id="modalImageName">Image Name</h3>
+                    <div class="modal-meta">
+                        <span id="modalImageDate">Upload Date</span>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-image-container">
+                        <img id="modalImage" src="" alt="Image preview">
+                    </div>
+                    <div class="modal-tags">
+                        <h4>Select Tags:</h4>
+                        <div id="modalTagsContainer" class="tags-container">
+                            <!-- Tags will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="approveBtn" class="btn btn-approve">Approve & Move</button>
+                    <button id="rejectBtn" class="btn btn-reject">Reject</button>
+                    <button class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="approve.js"></script>
+</body>
+</html>
