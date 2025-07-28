@@ -6,6 +6,7 @@ class ImageOverlay {
         this.imageInput = document.getElementById('imageInput');
         this.previewSection = document.getElementById('previewSection');
         this.downloadBtn = document.getElementById('downloadBtn');
+        this.uploadBtn = document.getElementById('uploadBtn');
         this.resetBtn = document.getElementById('resetBtn');
         
         // Text to overlay
@@ -16,6 +17,12 @@ class ImageOverlay {
         // Store original file info
         this.originalFile = null;
         this.originalFormat = 'png';
+        
+        // Initialize Supabase
+        this.supabase = supabase.createClient(
+            'https://nhsucumstmojfainalvp.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oc3VjdW1zdG1vamZhaW5hbHZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2ODQzOTAsImV4cCI6MjA2OTI2MDM5MH0.0TWbFkkn9ihIUhkqT_dN8VpdjGXRIeyJIsTACPTRKUk'
+        );
         
         this.initEventListeners();
     }
@@ -53,6 +60,11 @@ class ImageOverlay {
         // Download button
         this.downloadBtn.addEventListener('click', () => {
             this.downloadImage();
+        });
+        
+        // Upload to Supabase button
+        this.uploadBtn.addEventListener('click', () => {
+            this.uploadToSupabase();
         });
         
         // Reset button
@@ -220,6 +232,81 @@ class ImageOverlay {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    }
+    
+    async uploadToSupabase() {
+        try {
+            // Disable the upload button and show loading state
+            this.uploadBtn.disabled = true;
+            this.uploadBtn.textContent = 'Uploading...';
+            
+            // Convert canvas to blob
+            const blob = await new Promise(resolve => {
+                if (this.originalFormat === 'image/jpeg' || this.originalFormat === 'image/jpg') {
+                    this.canvas.toBlob(resolve, 'image/jpeg', 0.95);
+                } else if (this.originalFormat === 'image/webp') {
+                    this.canvas.toBlob(resolve, 'image/webp', 0.95);
+                } else {
+                    this.canvas.toBlob(resolve, 'image/png');
+                }
+            });
+            
+            // Generate filename
+            let fileName;
+            if (this.originalFile) {
+                const originalName = this.originalFile.name;
+                const lastDotIndex = originalName.lastIndexOf('.');
+                if (lastDotIndex !== -1) {
+                    const nameWithoutExt = originalName.substring(0, lastDotIndex);
+                    const originalExt = originalName.substring(lastDotIndex);
+                    fileName = `${nameWithoutExt}-overlay${originalExt}`;
+                } else {
+                    fileName = `${originalName}-overlay`;
+                }
+            } else {
+                const timestamp = Date.now();
+                fileName = `image-overlay-${timestamp}.png`;
+            }
+            
+            // Upload to Supabase storage
+            const filePath = `public/${fileName}`;
+            const { data, error } = await this.supabase.storage
+                .from('uploads')
+                .upload(filePath, blob, {
+                    contentType: blob.type,
+                    upsert: false // Disallow overwriting if file exists
+                });
+            
+            if (error) {
+                throw error;
+            }
+            
+            // Get public URL
+            const { data: urlData } = this.supabase.storage
+                .from('uploads')
+                .getPublicUrl(fileName);
+            
+            // Show success message
+            alert(`Image uploaded successfully!\nPublic URL: ${urlData.publicUrl}`);
+            
+            // Optionally copy URL to clipboard
+            if (navigator.clipboard) {
+                try {
+                    await navigator.clipboard.writeText(urlData.publicUrl);
+                    console.log('URL copied to clipboard');
+                } catch (clipboardError) {
+                    console.log('Could not copy to clipboard:', clipboardError);
+                }
+            }
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert(`Upload failed: ${error.message}`);
+        } finally {
+            // Re-enable the upload button
+            this.uploadBtn.disabled = false;
+            this.uploadBtn.textContent = 'Upload to Supabase';
+        }
     }
     
     resetUpload() {
