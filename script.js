@@ -284,10 +284,29 @@ class ImageOverlay {
             // Get public URL
             const { data: urlData } = this.supabase.storage
                 .from('uploads')
-                .getPublicUrl(fileName);
+                .getPublicUrl(filePath);
             
-            // Show success message
-            alert(`Image uploaded successfully!\nPublic URL: ${urlData.publicUrl}`);
+            // Insert record into Images table
+            const { data: insertData, error: insertError } = await this.supabase
+                .from('images')
+                .insert([
+                    {
+                        name: fileName,
+                        url: urlData.publicUrl,
+                        bucket: 'uploads'
+                    }
+                ])
+                .select();
+            
+            if (insertError) {
+                console.error('Database insert error:', insertError);
+                // Don't throw here - storage upload was successful, database is just a bonus
+                alert(`Image uploaded successfully, but failed to save to database.\nPublic URL: ${urlData.publicUrl}\nError: ${insertError.message}`);
+            } else {
+                console.log('Database insert successful:', insertData);
+                // Show success message
+                alert(`Image uploaded successfully and saved to database!\nPublic URL: ${urlData.publicUrl}`);
+            }
             
             // Optionally copy URL to clipboard
             if (navigator.clipboard) {
