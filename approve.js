@@ -214,7 +214,7 @@ Technical details: ${error.message}`);
                 throw error;
             }
             
-            this.renderImages(images || []);
+            await this.renderImages(images || []);
             
         } catch (error) {
             console.error('Load images error:', error);
@@ -224,21 +224,49 @@ Technical details: ${error.message}`);
         }
     }
     
-    renderImages(images) {
+    async renderImages(images) {
         if (images.length === 0) {
             this.imagesGrid.innerHTML = '<p class="no-data">No pending images to review.</p>';
             return;
         }
         
-        this.imagesGrid.innerHTML = images.map(image => `
-            <div class="image-item" onclick="adminDashboard.openImageModal(${image.id}, '${image.url}', '${image.name}', '${image.uploaded_at}')">
-                <img src="${image.url}" alt="${image.name}" loading="lazy">
-                <div class="image-info">
-                    <h4>${image.name}</h4>
-                    <p>${new Date(image.uploaded_at).toLocaleDateString()}</p>
+        // Generate image items with proper URLs
+        const imageItems = await Promise.all(images.map(async (image) => {
+            // Try to generate public URL first
+            const { data: urlData } = this.supabase.storage
+                .from('uploads')
+                .getPublicUrl(`public/${image.name}`);
+            
+            let imageUrl = urlData.publicUrl;
+            
+            // If public URL doesn't work, try signed URL (for private buckets)
+            if (!imageUrl || imageUrl.includes('null')) {
+                try {
+                    const { data: signedData, error: signedError } = await this.supabase.storage
+                        .from('uploads')
+                        .createSignedUrl(`public/${image.name}`, 3600); // 1 hour expiry
+                    
+                    if (!signedError && signedData) {
+                        imageUrl = signedData.signedUrl;
+                    }
+                } catch (signedUrlError) {
+                    console.error('Failed to create signed URL:', signedUrlError);
+                    imageUrl = '/placeholder-image.png'; // Fallback
+                }
+            }
+            
+            return `
+                <div class="image-item" onclick="adminDashboard.openImageModal(${image.id}, '${imageUrl}', '${image.name}', '${image.uploaded_at}')">
+                    <img src="${imageUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.innerHTML='<p style=color:red;>Image failed to load</p>'">
+                    <div class="image-info">
+                        <h4>${image.name}</h4>
+                        <p>${new Date(image.uploaded_at).toLocaleDateString()}</p>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }));
+        
+        this.imagesGrid.innerHTML = imageItems.join('');
     }
     
     async loadTags() {
