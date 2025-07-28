@@ -40,7 +40,8 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 60vh;
+    min-height: calc(100vh - 200px);
+    padding: 20px;
 }
 
 .login-card {
@@ -212,7 +213,6 @@ body {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -241,6 +241,67 @@ body {
 .image-info p {
     color: #666;
     font-size: 0.8rem;
+    margin-bottom: 10px;
+}
+
+.image-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.image-actions .btn {
+    flex: 1;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.image-tags {
+    margin: 10px 0;
+}
+
+.image-tags label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.tags-selection {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.tag-checkbox-small {
+    display: inline-block;
+    margin: 2px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.tag-checkbox-small input {
+    margin-right: 4px;
+    transform: scale(0.8);
+}
+
+.tag-checkbox-small span {
+    background: #f8f9fa;
+    padding: 4px 8px;
+    border-radius: 12px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.tag-checkbox-small input:checked+span {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
 }
 
 /* Buttons */

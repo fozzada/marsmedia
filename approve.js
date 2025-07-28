@@ -271,17 +271,94 @@ Technical details: ${error.message}`);
             console.log('Final image URL:', imageUrl);
             
             return `
-                <div class="image-item" onclick="adminDashboard.openImageModal(${image.id}, '${imageUrl}', '${image.name}', '${image.uploaded_at}')">
+                <div class="image-item" data-image-id="${image.id}" data-image-name="${image.name}">
                     <img src="${imageUrl}" alt="${image.name}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.innerHTML='<p style=color:red;>Image failed to load</p>'">
                     <div class="image-info">
                         <h4>${image.name}</h4>
                         <p>${new Date(image.uploaded_at).toLocaleDateString()}</p>
+                        <div class="image-tags">
+                            <label>Tags:</label>
+                            <div class="tags-selection" id="tags-${image.id}">
+                                <!-- Tags will be populated here -->
+                            </div>
+                        </div>
+                        <div class="image-actions">
+                            <button class="btn btn-approve" data-action="approve">Approve</button>
+                            <button class="btn btn-reject" data-action="reject">Reject</button>
+                        </div>
                     </div>
                 </div>
             `;
         }));
         
         this.imagesGrid.innerHTML = imageItems.join('');
+        
+        // Add event listeners for approve/reject buttons
+        this.addImageActionListeners();
+        
+        // Populate tags for each image after rendering
+        await this.populateImageTags(images);
+    }
+    
+    addImageActionListeners() {
+        // Remove existing listeners to avoid duplicates
+        if (this.handleImageAction) {
+            this.imagesGrid.removeEventListener('click', this.handleImageAction);
+        }
+        
+        // Define the click handler
+        this.handleImageAction = (e) => {
+            const button = e.target.closest('.btn[data-action]');
+            if (!button) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const imageItem = button.closest('.image-item');
+            const imageId = imageItem.dataset.imageId;
+            const imageName = imageItem.dataset.imageName;
+            const action = button.dataset.action;
+            
+            console.log('Button clicked:', action, imageId, imageName);
+            
+            if (action === 'approve') {
+                this.approveImageDirect(imageId, imageName);
+            } else if (action === 'reject') {
+                this.rejectImageDirect(imageId, imageName);
+            }
+        };
+        
+        this.imagesGrid.addEventListener('click', this.handleImageAction);
+    }
+    
+    async populateImageTags(images) {
+        try {
+            // Get all tags
+            const { data: tags, error } = await this.supabase
+                .from('tags')
+                .select('*')
+                .order('name');
+            
+            if (error) {
+                console.error('Failed to load tags for images:', error);
+                return;
+            }
+            
+            // Populate tag checkboxes for each image
+            images.forEach(image => {
+                const tagsContainer = document.getElementById(`tags-${image.id}`);
+                if (tagsContainer && tags) {
+                    tagsContainer.innerHTML = tags.map(tag => `
+                        <label class="tag-checkbox-small">
+                            <input type="checkbox" value="${tag.id}" data-tag-name="${tag.name}">
+                            <span>${tag.name}</span>
+                        </label>
+                    `).join('');
+                }
+            });
+        } catch (error) {
+            console.error('Error populating image tags:', error);
+        }
     }
     
     async loadTags() {
@@ -407,6 +484,167 @@ Technical details: ${error.message}`);
         this.currentImageId = null;
     }
     
+    async approveImageDirect(imageId, imageName) {
+        if (!confirm(`Approve image "${imageName}"?`)) {
+            return;
+        }
+        
+        try {
+            console.log('Approving image:', imageName);
+            
+            // Get selected tags for this image
+            const tagsContainer = document.getElementById(`tags-${imageId}`);
+            const selectedTags = tagsContainer ? 
+                Array.from(tagsContainer.querySelectorAll('input[type="checkbox"]:checked'))
+                    .map(cb => ({ id: parseInt(cb.value), name: cb.dataset.tagName })) : [];
+            
+            console.log('Selected tags:', selectedTags);
+            
+            // First, get the original upload date from the images table
+            const { data: originalImage, error: fetchError } = await this.supabase
+                .from('images')
+                .select('uploaded_at')
+                .eq('id', imageId)
+                .single();
+            
+            if (fetchError) {
+                console.error('Failed to fetch original image data:', fetchError);
+            }
+            
+            // Download from unapproved bucket
+            const { data: fileData, error: downloadError } = await this.supabase.storage
+                .from('unapproved')
+                .download(imageName);
+            
+            if (downloadError) {
+                throw new Error(`Failed to download from unapproved bucket: ${downloadError.message}`);
+            }
+            
+            // Upload to approved bucket
+            const { data: uploadData, error: uploadError } = await this.supabase.storage
+                .from('approved')
+                .upload(imageName, fileData, {
+                    contentType: fileData.type,
+                    upsert: true
+                });
+            
+            if (uploadError) {
+                throw new Error(`Failed to upload to approved bucket: ${uploadError.message}`);
+            }
+            
+            // Get public URL for approved bucket
+            const { data: urlData } = this.supabase.storage
+                .from('approved')
+                .getPublicUrl(imageName);
+            
+            // Insert into approved_images table with correct schema
+            const approvedImageData = {
+                name: imageName,
+                url: urlData.publicUrl,
+                bucket: 'approved'
+            };
+            
+            // Add original upload date if we have it
+            if (originalImage && originalImage.uploaded_at) {
+                approvedImageData.original_upload_date = originalImage.uploaded_at;
+            }
+            
+            const { data: approvedImage, error: insertError } = await this.supabase
+                .from('approved_images')
+                .insert([approvedImageData])
+                .select();
+            
+            if (insertError) {
+                throw new Error(`Failed to insert into approved_images: ${insertError.message}`);
+            }
+            
+            // Add tag associations if any tags were selected
+            if (selectedTags.length > 0) {
+                const tagAssociations = selectedTags.map(tag => ({
+                    image_id: approvedImage[0].id,
+                    tag_id: tag.id
+                }));
+                
+                const { error: tagError } = await this.supabase
+                    .from('image_tags')
+                    .insert(tagAssociations);
+                
+                if (tagError) {
+                    console.error('Tag association error:', tagError);
+                    // Don't fail the whole operation for tag errors
+                } else {
+                    console.log('Tags associated successfully:', tagAssociations);
+                }
+            }
+            
+            // Delete from unapproved bucket
+            const { error: deleteFileError } = await this.supabase.storage
+                .from('unapproved')
+                .remove([imageName]);
+            
+            if (deleteFileError) {
+                console.error('Failed to delete from unapproved bucket:', deleteFileError);
+                // Don't fail for this error
+            }
+            
+            // Delete from images table
+            const { error: deleteRowError } = await this.supabase
+                .from('images')
+                .delete()
+                .eq('id', imageId);
+            
+            if (deleteRowError) {
+                throw new Error(`Failed to delete from images table: ${deleteRowError.message}`);
+            }
+            
+            alert('Image approved successfully!');
+            await this.loadPendingImages();
+            this.updateStats();
+            
+        } catch (error) {
+            console.error('Approve error:', error);
+            alert(`Failed to approve image: ${error.message}`);
+        }
+    }
+    
+    async rejectImageDirect(imageId, imageName) {
+        if (!confirm(`Reject and permanently delete image "${imageName}"?`)) {
+            return;
+        }
+        
+        try {
+            console.log('Rejecting image:', imageName);
+            
+            // Delete from unapproved bucket
+            const { error: deleteFileError } = await this.supabase.storage
+                .from('unapproved')
+                .remove([imageName]);
+            
+            if (deleteFileError) {
+                console.error('Failed to delete from unapproved bucket:', deleteFileError);
+                // Continue with database deletion even if file deletion fails
+            }
+            
+            // Delete from images table
+            const { error: deleteRowError } = await this.supabase
+                .from('images')
+                .delete()
+                .eq('id', imageId);
+            
+            if (deleteRowError) {
+                throw new Error(`Failed to delete from images table: ${deleteRowError.message}`);
+            }
+            
+            alert('Image rejected and deleted successfully!');
+            await this.loadPendingImages();
+            this.updateStats();
+            
+        } catch (error) {
+            console.error('Reject error:', error);
+            alert(`Failed to reject image: ${error.message}`);
+        }
+    }
+    
     async approveImage() {
         if (!this.currentImage) {
             alert('No image selected.');
@@ -448,15 +686,21 @@ Technical details: ${error.message}`);
                 .from('approved')
                 .getPublicUrl(approvedPath);
             
-            // Insert into approved_images table
+            // Insert into approved_images table with correct schema
+            const approvedImageData = {
+                name: this.currentImage.name,
+                url: urlData.publicUrl,
+                bucket: 'approved'
+            };
+            
+            // Add original upload date if available
+            if (this.currentImage.uploaded_at) {
+                approvedImageData.original_upload_date = this.currentImage.uploaded_at;
+            }
+            
             const { data: approvedImage, error: insertError } = await this.supabase
                 .from('approved_images')
-                .insert([{
-                    name: this.currentImage.name,
-                    url: urlData.publicUrl,
-                    bucket: 'approved',
-                    original_image_id: this.currentImage.id
-                }])
+                .insert([approvedImageData])
                 .select();
             
             if (insertError) {
