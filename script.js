@@ -11,6 +11,7 @@ class ImageOverlay {
         // Text to overlay
         this.contractAddress = 'Cfmo6asAsZFx6GGQvAt4Ajxn8hN6vgWGpaSrjQKRpump';
         this.xHandle = '@MarsPygmySOL';
+        this.projectName = 'Mars on Pump';
         
         // Store original file info
         this.originalFile = null;
@@ -170,7 +171,7 @@ class ImageOverlay {
         const centerY = canvasHeight / 2;
         
         // Draw the watermark
-        ctx.fillText(this.xHandle, centerX, centerY);
+        ctx.fillText(this.projectName, centerX, centerY);
         
         // Restore the context state
         ctx.restore();
@@ -184,26 +185,34 @@ class ImageOverlay {
     downloadImage() {
         const link = document.createElement('a');
         
-        // Get original file extension
-        const originalExt = this.originalFile ? this.originalFile.name.split('.').pop().toLowerCase() : 'png';
-        const timestamp = Date.now();
+        // Get original filename and create new filename with overlay suffix
+        let fileName;
+        if (this.originalFile) {
+            const originalName = this.originalFile.name;
+            const lastDotIndex = originalName.lastIndexOf('.');
+            if (lastDotIndex !== -1) {
+                const nameWithoutExt = originalName.substring(0, lastDotIndex);
+                const originalExt = originalName.substring(lastDotIndex);
+                fileName = `${nameWithoutExt}-overlay${originalExt}`;
+            } else {
+                fileName = `${originalName}-overlay`;
+            }
+        } else {
+            fileName = `image-overlay.png`;
+        }
         
         // Set quality based on format
         let dataURL;
-        let fileName;
         
         if (this.originalFormat === 'image/jpeg' || this.originalFormat === 'image/jpg') {
             // High quality JPEG (0.95 = 95% quality)
             dataURL = this.canvas.toDataURL('image/jpeg', 0.95);
-            fileName = `mars-media-${timestamp}.jpg`;
         } else if (this.originalFormat === 'image/webp') {
             // High quality WebP
             dataURL = this.canvas.toDataURL('image/webp', 0.95);
-            fileName = `mars-media-${timestamp}.webp`;
         } else {
             // PNG (lossless)
             dataURL = this.canvas.toDataURL('image/png');
-            fileName = `mars-media-${timestamp}.png`;
         }
         
         link.download = fileName;
