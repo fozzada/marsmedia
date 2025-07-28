@@ -232,28 +232,43 @@ Technical details: ${error.message}`);
         
         // Generate image items with proper URLs
         const imageItems = await Promise.all(images.map(async (image) => {
-            // Try to generate public URL first
+            console.log('Processing image:', image.name);
+            
+            let imageUrl = null;
+            
+            // First try public URL (works if bucket is public)
             const { data: urlData } = this.supabase.storage
-                .from('uploads')
-                .getPublicUrl(`public/${image.name}`);
+                .from('unapproved')
+                .getPublicUrl(image.name);
             
-            let imageUrl = urlData.publicUrl;
+            console.log('Public URL generated:', urlData.publicUrl);
             
-            // If public URL doesn't work, try signed URL (for private buckets)
-            if (!imageUrl || imageUrl.includes('null')) {
+            if (urlData.publicUrl && !urlData.publicUrl.includes('null')) {
+                imageUrl = urlData.publicUrl;
+            } else {
+                // If public URL doesn't work, try signed URL (works for private buckets)
                 try {
                     const { data: signedData, error: signedError } = await this.supabase.storage
-                        .from('uploads')
-                        .createSignedUrl(`public/${image.name}`, 3600); // 1 hour expiry
+                        .from('unapproved')
+                        .createSignedUrl(image.name, 3600);
                     
-                    if (!signedError && signedData) {
+                    console.log('Signed URL result:', signedData, signedError);
+                    
+                    if (!signedError && signedData && signedData.signedUrl) {
                         imageUrl = signedData.signedUrl;
                     }
                 } catch (signedUrlError) {
-                    console.error('Failed to create signed URL:', signedUrlError);
-                    imageUrl = '/placeholder-image.png'; // Fallback
+                    console.error('Signed URL error:', signedUrlError);
                 }
             }
+            
+            if (!imageUrl) {
+                console.error('Could not generate valid URL for image:', image.name);
+                // Create a placeholder image
+                imageUrl = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
+            }
+            
+            console.log('Final image URL:', imageUrl);
             
             return `
                 <div class="image-item" onclick="adminDashboard.openImageModal(${image.id}, '${imageUrl}', '${image.name}', '${image.uploaded_at}')">
@@ -409,7 +424,7 @@ Technical details: ${error.message}`);
             
             // Download from uploads bucket
             const { data: fileData, error: downloadError } = await this.supabase.storage
-                .from('uploads')
+                .from('unapproved')
                 .download(originalPath);
             
             if (downloadError) {
@@ -467,7 +482,7 @@ Technical details: ${error.message}`);
             
             // Delete from uploads bucket
             const { error: deleteFileError } = await this.supabase.storage
-                .from('uploads')
+                .from('unapproved')
                 .remove([originalPath]);
             
             if (deleteFileError) {
@@ -509,7 +524,7 @@ Technical details: ${error.message}`);
         try {
             // Delete from uploads bucket
             const { error: deleteFileError } = await this.supabase.storage
-                .from('uploads')
+                .from('unapproved')
                 .remove([`public/${this.currentImage.name}`]);
             
             if (deleteFileError) {

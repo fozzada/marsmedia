@@ -270,7 +270,7 @@ class ImageOverlay {
             // Upload to Supabase storage
             const filePath = `public/${fileName}`;
             const { data, error } = await this.supabase.storage
-                .from('uploads')
+                .from('unapproved')
                 .upload(filePath, blob, {
                     contentType: blob.type,
                     upsert: false // Disallow overwriting if file exists
@@ -282,17 +282,17 @@ class ImageOverlay {
             
             // Get public URL
             const { data: urlData } = this.supabase.storage
-                .from('uploads')
+                .from('unapproved')
                 .getPublicUrl(filePath);
-            
+
             // Insert record into Images table
             const { data: insertData, error: insertError } = await this.supabase
                 .from('images')
                 .insert([
                     {
-                        name: fileName,
+                        name: filePath,
                         url: urlData.publicUrl,
-                        bucket: 'uploads'
+                        bucket: 'unapproved'
                     }
                 ])
                 .select();
