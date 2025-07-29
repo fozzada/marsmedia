@@ -53,8 +53,8 @@ header p {
     box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
 }
 
-/* Search Section */
-.search-section {
+/* Upload Section */
+.upload-section-inline {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     border-radius: 12px;
@@ -63,28 +63,23 @@ header p {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.search-bar {
-    display: flex;
-    gap: 15px;
+.upload-section-inline h2 {
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+}
+
+/* Filter Section */
+.filter-section {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 30px;
     margin-bottom: 30px;
-    align-items: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 }
 
-.search-input {
-    flex: 1;
-    padding: 12px 16px;
-    border: 2px solid #e1e5e9;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-.filter-section h3 {
+.filter-section h2 {
     margin-bottom: 15px;
     color: #333;
 }
@@ -240,10 +235,6 @@ header p {
     font-size: 11px;
 }
 
-/* Create Image Modal Styles */
-.upload-section {
-    margin-bottom: 30px;
-}
 
 .upload-area {
     border: 3px dashed #ccc;
@@ -463,9 +454,6 @@ header p {
         font-size: 2rem;
     }
 
-    .search-bar {
-        flex-direction: column;
-    }
 
     .gallery-header {
         flex-direction: column;

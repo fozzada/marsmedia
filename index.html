@@ -12,23 +12,41 @@
         <header>
             <h1>Mars Media Gallery</h1>
             <p>Browse and download Mars-themed images with @MarsPygmySOL overlay</p>
-            <button id="createImageBtn" class="btn btn-create">Create New Image</button>
         </header>
         
-        <!-- Search and Filter Section -->
-        <div class="search-section">
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="Search images..." class="search-input">
-                <button id="searchBtn" class="btn btn-primary">Search</button>
+        <!-- Upload Section -->
+        <div class="upload-section-inline">
+            <h2>Create New Image</h2>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-content">
+                    <svg class="upload-icon" viewBox="0 0 24 24" width="48" height="48">
+                        <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                    <p>Drag & drop an image here or click to browse</p>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                </div>
             </div>
             
-            <div class="filter-section">
-                <h3>Filter by Tags:</h3>
-                <div class="tags-filter" id="tagsFilter">
-                    <div class="loading">Loading tags...</div>
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <div class="image-container">
+                    <canvas id="canvas"></canvas>
                 </div>
-                <button id="clearFiltersBtn" class="btn btn-secondary">Clear Filters</button>
+                
+                <div class="controls">
+                    <button id="downloadBtn" class="btn btn-primary">Download Image</button>
+                    <button id="uploadBtn" class="btn btn-success">Upload to Supabase</button>
+                    <button id="resetBtn" class="btn btn-secondary">Upload New Image</button>
+                </div>
             </div>
+        </div>
+        
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <h2>Filter by Tags</h2>
+            <div class="tags-filter" id="tagsFilter">
+                <div class="loading">Loading tags...</div>
+            </div>
+            <button id="clearFiltersBtn" class="btn btn-secondary">Clear Filters</button>
         </div>
         
         <!-- Gallery Section -->
@@ -46,42 +64,6 @@
         </div>
     </div>
     
-    <!-- Create Image Modal -->
-    <div id="createImageModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close" id="closeCreateModal">&times;</span>
-            <div class="modal-header">
-                <h3>Create New Mars Image</h3>
-                <p>Upload an image and add @MarsPygmySOL overlay</p>
-            </div>
-            
-            <div class="modal-body">
-                <div class="upload-section">
-                    <div class="upload-area" id="uploadArea">
-                        <div class="upload-content">
-                            <svg class="upload-icon" viewBox="0 0 24 24" width="48" height="48">
-                                <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                            </svg>
-                            <p>Drag & drop an image here or click to browse</p>
-                            <input type="file" id="imageInput" accept="image/*" hidden>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="preview-section" id="previewSection" style="display: none;">
-                    <div class="image-container">
-                        <canvas id="canvas"></canvas>
-                    </div>
-                    
-                    <div class="controls">
-                        <button id="downloadBtn" class="btn btn-primary">Download Image</button>
-                        <button id="uploadBtn" class="btn btn-success">Upload to Supabase</button>
-                        <button id="resetBtn" class="btn btn-secondary">Upload New Image</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     
     <!-- Image View Modal -->
     <div id="imageViewModal" class="modal" style="display: none;">

@@ -6,17 +6,12 @@ class MarsMediaGallery {
         this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseAnonKey);
         
         // Gallery elements
-        this.searchInput = document.getElementById('searchInput');
-        this.searchBtn = document.getElementById('searchBtn');
         this.tagsFilter = document.getElementById('tagsFilter');
         this.clearFiltersBtn = document.getElementById('clearFiltersBtn');
         this.imagesGrid = document.getElementById('imagesGrid');
         this.imageCount = document.getElementById('imageCount');
         
-        // Create image modal elements
-        this.createImageBtn = document.getElementById('createImageBtn');
-        this.createImageModal = document.getElementById('createImageModal');
-        this.closeCreateModal = document.getElementById('closeCreateModal');
+        // Upload elements (now inline)
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');
         this.uploadArea = document.getElementById('uploadArea');
@@ -53,25 +48,14 @@ class MarsMediaGallery {
     }
     
     initEventListeners() {
-        // Gallery search and filters
-        this.searchBtn.addEventListener('click', () => this.filterImages());
-        this.searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.filterImages();
-        });
+        // Gallery filters
         this.clearFiltersBtn.addEventListener('click', () => this.clearFilters());
-        
-        // Create image modal
-        this.createImageBtn.addEventListener('click', () => this.openCreateModal());
-        this.closeCreateModal.addEventListener('click', () => this.closeCreateModalHandler());
         
         // Image view modal
         this.closeImageModal.addEventListener('click', () => this.closeImageModalHandler());
         this.downloadImageBtn.addEventListener('click', () => this.downloadCurrentImage());
         
-        // Close modals on outside click
-        this.createImageModal.addEventListener('click', (e) => {
-            if (e.target === this.createImageModal) this.closeCreateModalHandler();
-        });
+        // Close modal on outside click
         this.imageViewModal.addEventListener('click', (e) => {
             if (e.target === this.imageViewModal) this.closeImageModalHandler();
         });
@@ -190,16 +174,7 @@ class MarsMediaGallery {
     }
     
     filterImages() {
-        const searchTerm = this.searchInput.value.toLowerCase().trim();
-        
         let filteredImages = this.allImages;
-        
-        // Filter by search term
-        if (searchTerm) {
-            filteredImages = filteredImages.filter(image => 
-                image.name.toLowerCase().includes(searchTerm)
-            );
-        }
         
         // Filter by selected tags
         if (this.selectedTags.length > 0) {
@@ -213,7 +188,6 @@ class MarsMediaGallery {
     }
     
     clearFilters() {
-        this.searchInput.value = '';
         this.selectedTags = [];
         this.tagsFilter.querySelectorAll('.tag-filter').forEach(tagEl => {
             tagEl.classList.remove('active');
@@ -514,17 +488,6 @@ class MarsMediaGallery {
         }, 3000);
     }
     
-    // Create Image Modal Functions
-    openCreateModal() {
-        this.createImageModal.style.display = 'block';
-        this.resetUpload();
-    }
-    
-    closeCreateModalHandler() {
-        this.createImageModal.style.display = 'none';
-        this.resetUpload();
-    }
-    
     
     handleFileSelect(file) {
         if (!file || !file.type.startsWith('image/')) {
@@ -643,7 +606,7 @@ class MarsMediaGallery {
     }
     
     showPreview() {
-        document.querySelector('.upload-section').style.display = 'none';
+        this.uploadArea.style.display = 'none';
         this.previewSection.style.display = 'block';
     }
     
@@ -857,7 +820,7 @@ class MarsMediaGallery {
     
     resetUpload() {
         this.previewSection.style.display = 'none';
-        document.querySelector('.upload-section').style.display = 'block';
+        this.uploadArea.style.display = 'block';
         this.imageInput.value = '';
         
         // Clear canvas
