@@ -496,7 +496,7 @@ Technical details: ${error.message}`);
                 .from('approved')
                 .upload(imageName, fileData, {
                     contentType: fileData.type,
-                    upsert: true
+                    upsert: false
                 });
             
             if (uploadError) {
@@ -522,7 +522,7 @@ Technical details: ${error.message}`);
                                 .from('approved')
                                 .upload(thumbnailFileName, thumbData, {
                                     contentType: thumbData.type,
-                                    upsert: true
+                                    upsert: false
                                 });
                             
                             if (!thumbUploadError) {

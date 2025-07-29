@@ -552,20 +552,23 @@ class MarsMediaGallery {
         ctx.shadowOffsetX = 0.5;
         ctx.shadowOffsetY = 0.5;
         
-        // Calculate font size proportional to image size
-        const fontSize = Math.max(8, canvasWidth / 60);
+        // Calculate font size proportional to image size - make it bigger
+        const fontSize = Math.max(12, canvasWidth / 45); // Increased from /60 to /45
         ctx.font = `${fontSize}px 'Segoe UI', Arial, sans-serif`;
         
         // Calculate padding proportional to image size
         const padding = Math.max(10, canvasWidth * 0.02);
         
+        // Position text closer to top of shadowed area (about 1/3 from top instead of middle)
+        const textY = overlayStartY + overlayHeight * 0.35 - 5; // Move 5 pixels up
+        
         // Twitter handle on the left
         ctx.textAlign = 'left';
-        ctx.fillText(this.xHandle, padding, overlayStartY + overlayHeight / 2 + fontSize / 3);
+        ctx.fillText(this.xHandle, padding, textY);
         
         // Contract address on the right
         ctx.textAlign = 'right';
-        ctx.fillText(this.contractAddress, canvasWidth - padding, overlayStartY + overlayHeight / 2 + fontSize / 3);
+        ctx.fillText(this.contractAddress, canvasWidth - padding, textY);
         
         // Reset shadow
         ctx.shadowColor = 'transparent';
@@ -639,6 +642,8 @@ class MarsMediaGallery {
         document.body.removeChild(link);
     }
 
+
+
     // Helper function to create thumbnail
     async createThumbnail(sourceCanvas, maxSize) {
         const { width, height } = sourceCanvas;
@@ -693,20 +698,20 @@ class MarsMediaGallery {
             // Create thumbnail
             const thumbnailBlob = await this.createThumbnail(this.canvas, 300); // 300px max width/height
             
-            // Generate filename - always JPG
+            // Generate filename - keep original name, just change extension to JPG
             let fileName;
             if (this.originalFile) {
                 const originalName = this.originalFile.name;
                 const lastDotIndex = originalName.lastIndexOf('.');
                 if (lastDotIndex !== -1) {
                     const nameWithoutExt = originalName.substring(0, lastDotIndex);
-                    fileName = `${nameWithoutExt}-overlay.jpg`;
+                    fileName = `${nameWithoutExt}.jpg`;
                 } else {
-                    fileName = `${originalName}-overlay.jpg`;
+                    fileName = `${originalName}.jpg`;
                 }
             } else {
                 const timestamp = Date.now();
-                fileName = `image-overlay-${timestamp}.jpg`;
+                fileName = `image-${timestamp}.jpg`;
             }
 
             // Generate thumbnail filename
@@ -719,7 +724,7 @@ class MarsMediaGallery {
                 .from('unapproved')
                 .upload(filePath, fullSizeBlob, {
                     contentType: 'image/jpeg',
-                    upsert: false // Disallow overwriting if file exists
+                    upsert: false // Allow overwriting if file exists
                 });
             
             if (error) {
