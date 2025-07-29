@@ -35,6 +35,21 @@ body {
     opacity: 0.9;
 }
 
+.header-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    align-items: center;
+}
+
+.header-actions .btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Login Section */
 .login-section {
     display: flex;

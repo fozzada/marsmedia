@@ -496,7 +496,12 @@ Technical details: ${error.message}`);
             const tagsContainer = document.getElementById(`tags-${imageId}`);
             const selectedTags = tagsContainer ? 
                 Array.from(tagsContainer.querySelectorAll('input[type="checkbox"]:checked'))
-                    .map(cb => ({ id: parseInt(cb.value), name: cb.dataset.tagName })) : [];
+                    .map(cb => {
+                        const tagId = cb.value; // Keep as string since it's a GUID
+                        const tagName = cb.dataset.tagName;
+                        console.log('Processing checkbox:', cb.value, 'GUID:', tagId, 'name:', tagName);
+                        return { id: tagId, name: tagName };
+                    }) : [];
             
             console.log('Selected tags:', selectedTags);
             
@@ -560,20 +565,33 @@ Technical details: ${error.message}`);
             
             // Add tag associations if any tags were selected
             if (selectedTags.length > 0) {
-                const tagAssociations = selectedTags.map(tag => ({
-                    image_id: approvedImage[0].id,
-                    tag_id: tag.id
-                }));
+                console.log('Creating tag associations for approved image ID:', approvedImage[0].id);
+                console.log('Selected tags for association:', selectedTags);
                 
-                const { error: tagError } = await this.supabase
-                    .from('image_tags')
-                    .insert(tagAssociations);
+                // Filter out any tags with invalid IDs (should be valid GUIDs)
+                const validTags = selectedTags.filter(tag => tag.id && tag.id.trim() !== '');
+                console.log('Valid tags after filtering:', validTags);
                 
-                if (tagError) {
-                    console.error('Tag association error:', tagError);
-                    // Don't fail the whole operation for tag errors
+                if (validTags.length > 0) {
+                    const tagAssociations = validTags.map(tag => ({
+                        image_id: approvedImage[0].id,
+                        tag_id: tag.id
+                    }));
+                    
+                    console.log('Tag associations to insert:', tagAssociations);
+                    
+                    const { error: tagError } = await this.supabase
+                        .from('image_tags')
+                        .insert(tagAssociations);
+                    
+                    if (tagError) {
+                        console.error('Tag association error:', tagError);
+                        // Don't fail the whole operation for tag errors
+                    } else {
+                        console.log('Tags associated successfully:', tagAssociations);
+                    }
                 } else {
-                    console.log('Tags associated successfully:', tagAssociations);
+                    console.warn('No valid tags to associate after filtering');
                 }
             }
             
@@ -654,7 +672,7 @@ Technical details: ${error.message}`);
         try {
             // Get selected tags
             const selectedTags = Array.from(this.modalTagsContainer.querySelectorAll('input[type="checkbox"]:checked'))
-                .map(cb => ({ id: parseInt(cb.value), name: cb.dataset.tagName }));
+                .map(cb => ({ id: cb.value, name: cb.dataset.tagName })); // Keep GUID as string
             
             // Move image file from uploads to approved bucket
             const originalPath = `public/${this.currentImage.name}`;
