@@ -323,6 +323,11 @@ class MarsMediaGallery {
         this.resetUpload();
     }
     
+    closeCreateModalHandler() {
+        this.createImageModal.style.display = 'none';
+        this.resetUpload();
+    }
+    
     
     handleFileSelect(file) {
         if (!file || !file.type.startsWith('image/')) {

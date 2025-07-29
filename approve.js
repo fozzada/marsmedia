@@ -45,19 +45,7 @@ class AdminDashboard {
         this.newTagInput = document.getElementById('newTagInput');
         this.addTagBtn = document.getElementById('addTagBtn');
         
-        // Modal elements
-        this.modalImage = document.getElementById('modalImage');
-        this.modalImageName = document.getElementById('modalImageName');
-        this.modalImageDate = document.getElementById('modalImageDate');
-        this.modalTagsContainer = document.getElementById('modalTagsContainer');
-        this.approveBtn = document.getElementById('approveBtn');
-        this.rejectBtn = document.getElementById('rejectBtn');
-        this.closeModal = document.getElementById('closeModal');
-        this.cancelBtn = document.getElementById('cancelBtn');
         
-        // Current image being processed
-        this.currentImage = null;
-        this.currentImageId = null;
         
         this.initEventListeners();
         this.checkAuthStatus();
@@ -102,19 +90,6 @@ class AdminDashboard {
         this.newTagInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.addNewTag();
-            }
-        });
-        
-        // Modal controls
-        this.closeModal.addEventListener('click', () => this.closeImageModal());
-        this.cancelBtn.addEventListener('click', () => this.closeImageModal());
-        this.approveBtn.addEventListener('click', () => this.approveImage());
-        this.rejectBtn.addEventListener('click', () => this.rejectImage());
-        
-        // Click outside modal to close
-        this.imageModal.addEventListener('click', (e) => {
-            if (e.target === this.imageModal) {
-                this.closeImageModal();
             }
         });
     }
@@ -382,18 +357,10 @@ Technical details: ${error.message}`);
     
     renderTags(tags) {
         this.allTagsContainer.innerHTML = tags.map(tag => `
-            <span class="tag-pill" onclick="adminDashboard.deleteTag(${tag.id}, '${tag.name}')">
+            <span class="tag-pill" onclick="adminDashboard.deleteTag('${tag.id}', '${tag.name}')">
                 ${tag.name} 
                 <span class="delete-tag">×</span>
             </span>
-        `).join('');
-        
-        // Also render in modal
-        this.modalTagsContainer.innerHTML = tags.map(tag => `
-            <label class="tag-checkbox">
-                <input type="checkbox" value="${tag.id}" data-tag-name="${tag.name}">
-                <span>${tag.name}</span>
-            </label>
         `).join('');
     }
     
@@ -461,27 +428,6 @@ Technical details: ${error.message}`);
         
         this.pendingCount.textContent = imageItems.length;
         this.tagsCount.textContent = tagItems.length;
-    }
-    
-    openImageModal(imageId, imageUrl, imageName, createdAt) {
-        this.currentImageId = imageId;
-        this.currentImage = { id: imageId, url: imageUrl, name: imageName, uploaded_at: createdAt };
-        
-        this.modalImage.src = imageUrl;
-        this.modalImageName.textContent = imageName;
-        this.modalImageDate.textContent = new Date(createdAt).toLocaleString();
-        
-        // Clear previous selections
-        const checkboxes = this.modalTagsContainer.querySelectorAll('input[type="checkbox"]');
-        checkboxes.forEach(cb => cb.checked = false);
-        
-        this.imageModal.style.display = 'block';
-    }
-    
-    closeImageModal() {
-        this.imageModal.style.display = 'none';
-        this.currentImage = null;
-        this.currentImageId = null;
     }
     
     async approveImageDirect(imageId, imageName) {
@@ -659,158 +605,6 @@ Technical details: ${error.message}`);
             
         } catch (error) {
             console.error('Reject error:', error);
-            alert(`Failed to reject image: ${error.message}`);
-        }
-    }
-    
-    async approveImage() {
-        if (!this.currentImage) {
-            alert('No image selected.');
-            return;
-        }
-        
-        try {
-            // Get selected tags
-            const selectedTags = Array.from(this.modalTagsContainer.querySelectorAll('input[type="checkbox"]:checked'))
-                .map(cb => ({ id: cb.value, name: cb.dataset.tagName })); // Keep GUID as string
-            
-            // Move image file from uploads to approved bucket
-            const originalPath = `public/${this.currentImage.name}`;
-            const approvedPath = `public/${this.currentImage.name}`;
-            
-            // Download from uploads bucket
-            const { data: fileData, error: downloadError } = await this.supabase.storage
-                .from('unapproved')
-                .download(originalPath);
-            
-            if (downloadError) {
-                throw new Error(`Failed to download from uploads: ${downloadError.message}`);
-            }
-            
-            // Upload to approved bucket
-            const { data: uploadData, error: uploadError } = await this.supabase.storage
-                .from('approved')
-                .upload(approvedPath, fileData, {
-                    contentType: fileData.type,
-                    upsert: true
-                });
-            
-            if (uploadError) {
-                throw new Error(`Failed to upload to approved: ${uploadError.message}`);
-            }
-            
-            // Get public URL for approved bucket
-            const { data: urlData } = this.supabase.storage
-                .from('approved')
-                .getPublicUrl(approvedPath);
-            
-            // Insert into approved_images table with correct schema
-            const approvedImageData = {
-                name: this.currentImage.name,
-                url: urlData.publicUrl,
-                bucket: 'approved'
-            };
-            
-            // Add original upload date if available
-            if (this.currentImage.uploaded_at) {
-                approvedImageData.original_upload_date = this.currentImage.uploaded_at;
-            }
-            
-            const { data: approvedImage, error: insertError } = await this.supabase
-                .from('approved_images')
-                .insert([approvedImageData])
-                .select();
-            
-            if (insertError) {
-                throw new Error(`Failed to insert into approved_images: ${insertError.message}`);
-            }
-            
-            // Add tag associations if any tags were selected
-            if (selectedTags.length > 0) {
-                const tagAssociations = selectedTags.map(tag => ({
-                    image_id: approvedImage[0].id,
-                    tag_id: tag.id
-                }));
-                
-                const { error: tagError } = await this.supabase
-                    .from('image_tags')
-                    .insert(tagAssociations);
-                
-                if (tagError) {
-                    console.error('Tag association error:', tagError);
-                    // Don't fail the whole operation for tag errors
-                }
-            }
-            
-            // Delete from uploads bucket
-            const { error: deleteFileError } = await this.supabase.storage
-                .from('unapproved')
-                .remove([originalPath]);
-            
-            if (deleteFileError) {
-                console.error('Failed to delete from uploads bucket:', deleteFileError);
-                // Don't fail for this error
-            }
-            
-            // Delete from images table
-            const { error: deleteRowError } = await this.supabase
-                .from('images')
-                .delete()
-                .eq('id', this.currentImage.id);
-            
-            if (deleteRowError) {
-                throw new Error(`Failed to delete from images table: ${deleteRowError.message}`);
-            }
-            
-            alert('Image approved and moved successfully!');
-            this.closeImageModal();
-            await this.loadPendingImages();
-            this.updateStats();
-            
-        } catch (error) {
-            console.error('Approval error:', error);
-            alert(`Failed to approve image: ${error.message}`);
-        }
-    }
-    
-    async rejectImage() {
-        if (!this.currentImage) {
-            alert('No image selected.');
-            return;
-        }
-        
-        if (!confirm(`Are you sure you want to reject "${this.currentImage.name}"? This will permanently delete the image.`)) {
-            return;
-        }
-        
-        try {
-            // Delete from uploads bucket
-            const { error: deleteFileError } = await this.supabase.storage
-                .from('unapproved')
-                .remove([`public/${this.currentImage.name}`]);
-            
-            if (deleteFileError) {
-                console.error('Failed to delete from uploads bucket:', deleteFileError);
-                // Continue with database deletion even if file deletion fails
-            }
-            
-            // Delete from images table
-            const { error: deleteRowError } = await this.supabase
-                .from('images')
-                .delete()
-                .eq('id', this.currentImage.id);
-            
-            if (deleteRowError) {
-                throw deleteRowError;
-            }
-            
-            alert('Image rejected and deleted successfully!');
-            this.closeImageModal();
-            await this.loadPendingImages();
-            this.updateStats();
-            
-        } catch (error) {
-            console.error('Rejection error:', error);
             alert(`Failed to reject image: ${error.message}`);
         }
     }
