@@ -294,10 +294,36 @@ header p {
 }
 
 .upload-message {
-    color: #2e7d32;
     font-weight: 500;
     margin: 0;
     font-size: 0.9rem;
+}
+
+.upload-info.upload-success {
+    background: rgba(76, 175, 80, 0.1);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+.upload-info.upload-success .upload-message {
+    color: #2e7d32;
+}
+
+.upload-info.upload-error {
+    background: rgba(211, 47, 47, 0.1);
+    border-color: rgba(211, 47, 47, 0.3);
+}
+
+.upload-info.upload-error .upload-message {
+    color: #d32f2f;
+}
+
+.upload-info.upload-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border-color: rgba(255, 152, 0, 0.3);
+}
+
+.upload-info.upload-warning .upload-message {
+    color: #f57c00;
 }
 
 .image-container {

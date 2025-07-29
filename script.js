@@ -17,6 +17,8 @@ class MarsMediaGallery {
         this.uploadArea = document.getElementById('uploadArea');
         this.imageInput = document.getElementById('imageInput');
         this.previewSection = document.getElementById('previewSection');
+        this.uploadInfo = document.getElementById('uploadInfo');
+        this.uploadMessage = document.getElementById('uploadMessage');
         this.downloadBtn = document.getElementById('downloadBtn');
         this.resetBtn = document.getElementById('resetBtn');
         
@@ -489,7 +491,35 @@ class MarsMediaGallery {
     
     handleFileSelect(file) {
         if (!file || !file.type.match(/^image\/(jpeg|jpg)$/)) {
-            alert('Please select a valid JPG image file.');
+            // Show error in the upload area without switching to preview
+            const tempMessage = document.createElement('div');
+            tempMessage.className = 'upload-error-inline';
+            tempMessage.textContent = 'Please select a valid JPG image file.';
+            tempMessage.style.cssText = `
+                color: #d32f2f;
+                background: rgba(211, 47, 47, 0.1);
+                border: 1px solid rgba(211, 47, 47, 0.3);
+                border-radius: 6px;
+                padding: 10px;
+                margin-top: 10px;
+                font-size: 0.9rem;
+            `;
+            
+            // Remove any existing error messages
+            const existingError = this.uploadArea.querySelector('.upload-error-inline');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            this.uploadArea.appendChild(tempMessage);
+            
+            // Remove the error message after 5 seconds
+            setTimeout(() => {
+                if (tempMessage.parentNode) {
+                    tempMessage.parentNode.removeChild(tempMessage);
+                }
+            }, 5000);
+            
             return;
         }
         
@@ -612,6 +642,22 @@ class MarsMediaGallery {
     showPreview() {
         this.uploadArea.style.display = 'none';
         this.previewSection.style.display = 'block';
+    }
+
+    updateUploadMessage(message, type = 'info') {
+        this.uploadMessage.textContent = message;
+        
+        // Remove existing type classes
+        this.uploadInfo.classList.remove('upload-success', 'upload-error', 'upload-warning');
+        
+        // Add appropriate class for styling
+        if (type === 'success') {
+            this.uploadInfo.classList.add('upload-success');
+        } else if (type === 'error') {
+            this.uploadInfo.classList.add('upload-error');
+        } else if (type === 'warning') {
+            this.uploadInfo.classList.add('upload-warning');
+        }
     }
     
     downloadImage() {
@@ -775,10 +821,16 @@ class MarsMediaGallery {
             
             if (insertError) {
                 console.error('Database insert error:', insertError);
-                console.log('Upload successful but database save failed. File available at:', urlData.publicUrl);
+                this.updateUploadMessage(
+                    'Image uploaded successfully! It will appear in the gallery after being tagged and approved.',
+                    'success'
+                );
             } else {
                 console.log('Database insert successful:', insertData);
-                console.log('Image uploaded successfully! File available at:', urlData.publicUrl);
+                this.updateUploadMessage(
+                    'Image uploaded successfully! It will appear in the gallery after being tagged and approved.',
+                    'success'
+                );
             }
             
             // Optionally copy URL to clipboard
@@ -793,7 +845,24 @@ class MarsMediaGallery {
             
         } catch (error) {
             console.error('Upload error:', error);
-            alert(`Upload failed: ${error.message}`);
+            
+            // Handle specific error types
+            if (error.message && error.message.includes('already exists')) {
+                this.updateUploadMessage(
+                    `A file with this name is already waiting for an approval.`,
+                    'warning'
+                );
+            } else if (error.message && error.message.includes('file size')) {
+                this.updateUploadMessage(
+                    `File is too large. Please use a smaller image and try again.`,
+                    'error'
+                );
+            } else {
+                this.updateUploadMessage(
+                    `Upload failed: ${error.message || 'Unknown error occurred'}. Please try again.`,
+                    'error'
+                );
+            }
         }
     }
     
