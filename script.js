@@ -18,7 +18,6 @@ class MarsMediaGallery {
         this.imageInput = document.getElementById('imageInput');
         this.previewSection = document.getElementById('previewSection');
         this.downloadBtn = document.getElementById('downloadBtn');
-        this.uploadBtn = document.getElementById('uploadBtn');
         this.resetBtn = document.getElementById('resetBtn');
         
         // Image view modal elements
@@ -81,7 +80,6 @@ class MarsMediaGallery {
         
         // Canvas functionality
         this.downloadBtn.addEventListener('click', () => this.downloadImage());
-        this.uploadBtn.addEventListener('click', () => this.uploadToSupabase());
         this.resetBtn.addEventListener('click', () => this.resetUpload());
     }
     
@@ -490,8 +488,8 @@ class MarsMediaGallery {
     
     
     handleFileSelect(file) {
-        if (!file || !file.type.startsWith('image/')) {
-            alert('Please select a valid image file.');
+        if (!file || !file.type.match(/^image\/(jpeg|jpg)$/)) {
+            alert('Please select a valid JPG image file.');
             return;
         }
         
@@ -508,9 +506,11 @@ class MarsMediaGallery {
     
     loadImage(imageSrc) {
         const img = new Image();
-        img.onload = () => {
+        img.onload = async () => {
             this.drawImageWithOverlay(img);
             this.showPreview();
+            // Auto-upload to Supabase
+            await this.uploadToSupabase();
         };
         img.src = imageSrc;
     }
@@ -535,14 +535,15 @@ class MarsMediaGallery {
         // Add subtle center watermark first (so bottom overlay goes on top)
         this.addCenterWatermark(canvasWidth, canvasHeight);
         
-        // Scale overlay height proportionally to image size
-        const overlayHeight = Math.max(30, canvasHeight * 0.05);
-        const gradient = ctx.createLinearGradient(0, canvasHeight - overlayHeight, 0, canvasHeight);
+        // Scale overlay height proportionally to image size - make it higher for X visibility
+        const overlayHeight = Math.max(50, canvasHeight * 0.12); // Increased from 0.05 to 0.12
+        const overlayStartY = canvasHeight - overlayHeight;
+        const gradient = ctx.createLinearGradient(0, overlayStartY, 0, canvasHeight);
         gradient.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
         
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, canvasHeight - overlayHeight, canvasWidth, overlayHeight);
+        ctx.fillRect(0, overlayStartY, canvasWidth, overlayHeight);
         
         // Text styling - lower contrast and smaller
         ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
@@ -560,11 +561,11 @@ class MarsMediaGallery {
         
         // Twitter handle on the left
         ctx.textAlign = 'left';
-        ctx.fillText(this.xHandle, padding, canvasHeight - overlayHeight / 2 + fontSize / 3);
+        ctx.fillText(this.xHandle, padding, overlayStartY + overlayHeight / 2 + fontSize / 3);
         
         // Contract address on the right
         ctx.textAlign = 'right';
-        ctx.fillText(this.contractAddress, canvasWidth - padding, canvasHeight - overlayHeight / 2 + fontSize / 3);
+        ctx.fillText(this.contractAddress, canvasWidth - padding, overlayStartY + overlayHeight / 2 + fontSize / 3);
         
         // Reset shadow
         ctx.shadowColor = 'transparent';
@@ -613,35 +614,23 @@ class MarsMediaGallery {
     downloadImage() {
         const link = document.createElement('a');
         
-        // Get original filename and create new filename with overlay suffix
+        // Get original filename and create new filename with overlay suffix - always JPG
         let fileName;
         if (this.originalFile) {
             const originalName = this.originalFile.name;
             const lastDotIndex = originalName.lastIndexOf('.');
             if (lastDotIndex !== -1) {
                 const nameWithoutExt = originalName.substring(0, lastDotIndex);
-                const originalExt = originalName.substring(lastDotIndex);
-                fileName = `${nameWithoutExt}-overlay${originalExt}`;
+                fileName = `${nameWithoutExt}-overlay.jpg`;
             } else {
-                fileName = `${originalName}-overlay`;
+                fileName = `${originalName}-overlay.jpg`;
             }
         } else {
-            fileName = `image-overlay.png`;
+            fileName = `image-overlay.jpg`;
         }
         
-        // Set quality based on format
-        let dataURL;
-        
-        if (this.originalFormat === 'image/jpeg' || this.originalFormat === 'image/jpg') {
-            // High quality JPEG (0.95 = 95% quality)
-            dataURL = this.canvas.toDataURL('image/jpeg', 0.95);
-        } else if (this.originalFormat === 'image/webp') {
-            // High quality WebP
-            dataURL = this.canvas.toDataURL('image/webp', 0.95);
-        } else {
-            // PNG (lossless)
-            dataURL = this.canvas.toDataURL('image/png');
-        }
+        // Always use high quality JPEG format
+        let dataURL = this.canvas.toDataURL('image/jpeg', 0.95);
         
         link.download = fileName;
         link.href = dataURL;
@@ -694,51 +683,42 @@ class MarsMediaGallery {
     
     async uploadToSupabase() {
         try {
-            // Disable the upload button and show loading state
-            this.uploadBtn.disabled = true;
-            this.uploadBtn.textContent = 'Uploading...';
+            console.log('Starting auto-upload to Supabase...');
             
-            // Convert canvas to blob (full size)
+            // Convert canvas to blob (full size) - force JPEG since we only accept JPG
             const fullSizeBlob = await new Promise(resolve => {
-                if (this.originalFormat === 'image/jpeg' || this.originalFormat === 'image/jpg') {
-                    this.canvas.toBlob(resolve, 'image/jpeg', 0.95);
-                } else if (this.originalFormat === 'image/webp') {
-                    this.canvas.toBlob(resolve, 'image/webp', 0.95);
-                } else {
-                    this.canvas.toBlob(resolve, 'image/png');
-                }
+                this.canvas.toBlob(resolve, 'image/jpeg', 0.95);
             });
 
             // Create thumbnail
             const thumbnailBlob = await this.createThumbnail(this.canvas, 300); // 300px max width/height
             
-            // Generate filename
+            // Generate filename - always JPG
             let fileName;
             if (this.originalFile) {
                 const originalName = this.originalFile.name;
                 const lastDotIndex = originalName.lastIndexOf('.');
                 if (lastDotIndex !== -1) {
                     const nameWithoutExt = originalName.substring(0, lastDotIndex);
-                    const originalExt = originalName.substring(lastDotIndex);
-                    fileName = `${nameWithoutExt}-overlay${originalExt}`;
+                    fileName = `${nameWithoutExt}-overlay.jpg`;
                 } else {
-                    fileName = `${originalName}-overlay`;
+                    fileName = `${originalName}-overlay.jpg`;
                 }
             } else {
                 const timestamp = Date.now();
-                fileName = `image-overlay-${timestamp}.png`;
+                fileName = `image-overlay-${timestamp}.jpg`;
             }
 
             // Generate thumbnail filename
             const thumbFileName = this.getThumbnailFileName(fileName);
             
             // Upload full-size image to Supabase storage
-            this.uploadBtn.textContent = 'Uploading full image...';
+            console.log('Uploading full image...');
             const filePath = `public/${fileName}`;
             const { data, error } = await this.supabase.storage
                 .from('unapproved')
                 .upload(filePath, fullSizeBlob, {
-                    contentType: fullSizeBlob.type,
+                    contentType: 'image/jpeg',
                     upsert: false // Disallow overwriting if file exists
                 });
             
@@ -747,12 +727,12 @@ class MarsMediaGallery {
             }
 
             // Upload thumbnail to Supabase storage
-            this.uploadBtn.textContent = 'Uploading thumbnail...';
+            console.log('Uploading thumbnail...');
             const thumbFilePath = `public/${thumbFileName}`;
             const { data: thumbData, error: thumbError } = await this.supabase.storage
                 .from('unapproved')
                 .upload(thumbFilePath, thumbnailBlob, {
-                    contentType: thumbnailBlob.type,
+                    contentType: 'image/jpeg',
                     upsert: false
                 });
             
@@ -771,7 +751,7 @@ class MarsMediaGallery {
                 .getPublicUrl(thumbFilePath);
 
             // Insert record into Images table
-            this.uploadBtn.textContent = 'Saving to database...';
+            console.log('Saving to database...');
             const imageRecord = {
                 name: filePath,
                 url: urlData.publicUrl,
@@ -790,12 +770,10 @@ class MarsMediaGallery {
             
             if (insertError) {
                 console.error('Database insert error:', insertError);
-                // Don't throw here - storage upload was successful, database is just a bonus
-                alert(`Image uploaded successfully, but failed to save to database.\nPublic URL: ${urlData.publicUrl}\nError: ${insertError.message}`);
+                console.log('Upload successful but database save failed. File available at:', urlData.publicUrl);
             } else {
                 console.log('Database insert successful:', insertData);
-                // Show success message
-                alert(`Image uploaded successfully and saved to database!\nPublic URL: ${urlData.publicUrl}`);
+                console.log('Image uploaded successfully! File available at:', urlData.publicUrl);
             }
             
             // Optionally copy URL to clipboard
@@ -811,10 +789,6 @@ class MarsMediaGallery {
         } catch (error) {
             console.error('Upload error:', error);
             alert(`Upload failed: ${error.message}`);
-        } finally {
-            // Re-enable the upload button
-            this.uploadBtn.disabled = false;
-            this.uploadBtn.textContent = 'Upload to Supabase';
         }
     }
     
