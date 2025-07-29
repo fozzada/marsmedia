@@ -182,7 +182,7 @@ Technical details: ${error.message}`);
             
             const { data: images, error } = await this.supabase
                 .from('images')
-                .select('*')
+                .select('*, thumbnail_url')
                 .order('uploaded_at', { ascending: false });
             
             if (error) {
@@ -211,29 +211,36 @@ Technical details: ${error.message}`);
             
             let imageUrl = null;
             
-            // First try public URL (works if bucket is public)
-            const { data: urlData } = this.supabase.storage
-                .from('unapproved')
-                .getPublicUrl(image.name);
-            
-            console.log('Public URL generated:', urlData.publicUrl);
-            
-            if (urlData.publicUrl && !urlData.publicUrl.includes('null')) {
-                imageUrl = urlData.publicUrl;
+            // Try thumbnail first if available
+            if (image.thumbnail_url) {
+                console.log('Using thumbnail URL:', image.thumbnail_url);
+                imageUrl = image.thumbnail_url;
             } else {
-                // If public URL doesn't work, try signed URL (works for private buckets)
-                try {
-                    const { data: signedData, error: signedError } = await this.supabase.storage
-                        .from('unapproved')
-                        .createSignedUrl(image.name, 3600);
-                    
-                    console.log('Signed URL result:', signedData, signedError);
-                    
-                    if (!signedError && signedData && signedData.signedUrl) {
-                        imageUrl = signedData.signedUrl;
+                // Fallback to full image processing
+                // First try public URL (works if bucket is public)
+                const { data: urlData } = this.supabase.storage
+                    .from('unapproved')
+                    .getPublicUrl(image.name);
+                
+                console.log('Public URL generated:', urlData.publicUrl);
+                
+                if (urlData.publicUrl && !urlData.publicUrl.includes('null')) {
+                    imageUrl = urlData.publicUrl;
+                } else {
+                    // If public URL doesn't work, try signed URL (works for private buckets)
+                    try {
+                        const { data: signedData, error: signedError } = await this.supabase.storage
+                            .from('unapproved')
+                            .createSignedUrl(image.name, 3600);
+                        
+                        console.log('Signed URL result:', signedData, signedError);
+                        
+                        if (!signedError && signedData && signedData.signedUrl) {
+                            imageUrl = signedData.signedUrl;
+                        }
+                    } catch (signedUrlError) {
+                        console.error('Signed URL error:', signedUrlError);
                     }
-                } catch (signedUrlError) {
-                    console.error('Signed URL error:', signedUrlError);
                 }
             }
             
@@ -429,6 +436,19 @@ Technical details: ${error.message}`);
         this.pendingCount.textContent = imageItems.length;
         this.tagsCount.textContent = tagItems.length;
     }
+
+    // Helper function to extract filename from Supabase URL
+    extractFileNameFromUrl(url) {
+        try {
+            // Supabase URLs typically end with /storage/v1/object/public/bucket/path/filename
+            const urlParts = url.split('/');
+            const filename = urlParts[urlParts.length - 1];
+            return filename ? `public/${filename}` : null;
+        } catch (error) {
+            console.error('Error extracting filename from URL:', error);
+            return null;
+        }
+    }
     
     async approveImageDirect(imageId, imageName) {
         if (!confirm(`Approve image "${imageName}"?`)) {
@@ -451,10 +471,10 @@ Technical details: ${error.message}`);
             
             console.log('Selected tags:', selectedTags);
             
-            // First, get the original upload date from the images table
+            // First, get the original upload date and thumbnail info from the images table
             const { data: originalImage, error: fetchError } = await this.supabase
                 .from('images')
-                .select('uploaded_at')
+                .select('uploaded_at, thumbnail_url')
                 .eq('id', imageId)
                 .single();
             
@@ -482,6 +502,42 @@ Technical details: ${error.message}`);
             if (uploadError) {
                 throw new Error(`Failed to upload to approved bucket: ${uploadError.message}`);
             }
+
+            // Handle thumbnail if it exists
+            let approvedThumbnailUrl = null;
+            if (originalImage && originalImage.thumbnail_url) {
+                try {
+                    // Extract thumbnail filename from URL
+                    const thumbnailFileName = this.extractFileNameFromUrl(originalImage.thumbnail_url);
+                    
+                    if (thumbnailFileName) {
+                        // Download thumbnail from unapproved bucket
+                        const { data: thumbData, error: thumbDownloadError } = await this.supabase.storage
+                            .from('unapproved')
+                            .download(thumbnailFileName);
+                        
+                        if (!thumbDownloadError && thumbData) {
+                            // Upload thumbnail to approved bucket
+                            const { data: thumbUploadData, error: thumbUploadError } = await this.supabase.storage
+                                .from('approved')
+                                .upload(thumbnailFileName, thumbData, {
+                                    contentType: thumbData.type,
+                                    upsert: true
+                                });
+                            
+                            if (!thumbUploadError) {
+                                const { data: thumbUrlData } = this.supabase.storage
+                                    .from('approved')
+                                    .getPublicUrl(thumbnailFileName);
+                                approvedThumbnailUrl = thumbUrlData.publicUrl;
+                            }
+                        }
+                    }
+                } catch (thumbError) {
+                    console.error('Thumbnail processing error:', thumbError);
+                    // Continue without thumbnail - not critical
+                }
+            }
             
             // Get public URL for approved bucket
             const { data: urlData } = this.supabase.storage
@@ -494,6 +550,11 @@ Technical details: ${error.message}`);
                 url: urlData.publicUrl,
                 bucket: 'approved'
             };
+            
+            // Add thumbnail URL if available
+            if (approvedThumbnailUrl) {
+                approvedImageData.thumbnail_url = approvedThumbnailUrl;
+            }
             
             // Add original upload date if we have it
             if (originalImage && originalImage.uploaded_at) {
@@ -579,7 +640,14 @@ Technical details: ${error.message}`);
         try {
             console.log('Rejecting image:', imageName);
             
-            // Delete from unapproved bucket
+            // Get thumbnail info to clean it up too
+            const { data: originalImage, error: fetchError } = await this.supabase
+                .from('images')
+                .select('thumbnail_url')
+                .eq('id', imageId)
+                .single();
+            
+            // Delete main image from unapproved bucket
             const { error: deleteFileError } = await this.supabase.storage
                 .from('unapproved')
                 .remove([imageName]);
@@ -587,6 +655,24 @@ Technical details: ${error.message}`);
             if (deleteFileError) {
                 console.error('Failed to delete from unapproved bucket:', deleteFileError);
                 // Continue with database deletion even if file deletion fails
+            }
+
+            // Delete thumbnail if it exists
+            if (!fetchError && originalImage && originalImage.thumbnail_url) {
+                try {
+                    const thumbnailFileName = this.extractFileNameFromUrl(originalImage.thumbnail_url);
+                    if (thumbnailFileName) {
+                        const { error: thumbDeleteError } = await this.supabase.storage
+                            .from('unapproved')
+                            .remove([thumbnailFileName]);
+                        
+                        if (thumbDeleteError) {
+                            console.error('Failed to delete thumbnail:', thumbDeleteError);
+                        }
+                    }
+                } catch (thumbError) {
+                    console.error('Thumbnail cleanup error:', thumbError);
+                }
             }
             
             // Delete from images table

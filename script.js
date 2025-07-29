@@ -118,6 +118,7 @@ class MarsMediaGallery {
                     id,
                     name,
                     url,
+                    thumbnail_url,
                     bucket,
                     original_upload_date,
                     approved_at,
@@ -233,20 +234,29 @@ class MarsMediaGallery {
         
         this.imagesGrid.innerHTML = images.map(image => {
             const imageTags = image.image_tags?.map(it => it.tags?.name).filter(Boolean) || [];
-            const uploadDate = new Date(image.original_upload_date || image.approved_at).toLocaleDateString();
+            
+            // Use thumbnail for grid display, fallback to full image
+            const displayUrl = image.thumbnail_url || image.url;
             
             return `
                 <div class="image-item" data-image-id="${image.id}">
-                    <img src="${image.url}" alt="${image.name}" loading="lazy">
-                    <div class="image-info">
-                        <h4>${image.name}</h4>
-                        <div class="date">Uploaded: ${uploadDate}</div>
-                        <div class="image-tags-list">
-                            ${imageTags.map(tag => `<span class="tag-pill-small">${tag}</span>`).join('')}
+                    <div class="image-container">
+                        <img src="${displayUrl}" alt="${image.name}" loading="lazy">
+                        <div class="image-actions">
+                            <button class="action-icon copy-btn" onclick="event.stopPropagation(); marsGallery.copyImageToClipboard('${image.url}')" title="Copy to clipboard">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                            </button>
+                            <button class="action-icon download-btn" onclick="event.stopPropagation(); marsGallery.downloadImageDirect('${image.url}', '${image.name}')" title="Download">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                                </svg>
+                            </button>
                         </div>
-                        <button class="download-btn" onclick="event.stopPropagation(); marsGallery.downloadImageDirect('${image.url}', '${image.name}')">
-                            Download
-                        </button>
+                    </div>
+                    <div class="image-tags-list">
+                        ${imageTags.map(tag => `<span class="tag-pill-small">${tag}</span>`).join('')}
                     </div>
                 </div>
             `;
@@ -315,6 +325,193 @@ class MarsMediaGallery {
             console.error('Error downloading image:', error);
             alert('Failed to download image. Please try again.');
         }
+    }
+    
+    async copyImageToClipboard(imageUrl) {
+        try {
+            // Method 1: Try creating a canvas and copying from it
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+                img.src = imageUrl;
+            });
+            
+            // Create canvas and draw image
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            // Try to copy canvas as blob
+            if (navigator.clipboard && window.ClipboardItem) {
+                try {
+                    const blob = await new Promise(resolve => {
+                        canvas.toBlob(resolve, 'image/png');
+                    });
+                    
+                    const clipboardItem = new ClipboardItem({
+                        'image/png': blob
+                    });
+                    
+                    await navigator.clipboard.write([clipboardItem]);
+                    this.showCopySuccess('Image copied to clipboard!');
+                    return;
+                } catch (clipboardError) {
+                    console.warn('Canvas clipboard method failed:', clipboardError);
+                }
+            }
+            
+            // Method 2: Try direct fetch and clipboard
+            try {
+                const response = await fetch(imageUrl);
+                const blob = await response.blob();
+                
+                if (navigator.clipboard && window.ClipboardItem) {
+                    const clipboardItem = new ClipboardItem({
+                        [blob.type]: blob
+                    });
+                    
+                    await navigator.clipboard.write([clipboardItem]);
+                    this.showCopySuccess('Image copied to clipboard!');
+                    return;
+                }
+            } catch (fetchError) {
+                console.warn('Fetch clipboard method failed:', fetchError);
+            }
+            
+            // Method 3: Create a temporary image element for right-click simulation
+            this.createCopyableImage(imageUrl);
+            
+        } catch (error) {
+            console.error('Error copying image:', error);
+            
+            // Final fallback: copy URL as text
+            try {
+                await navigator.clipboard.writeText(imageUrl);
+                alert('Could not copy image content. Image URL copied instead.\n\nTip: Try right-clicking the image and selecting "Copy image" for better compatibility.');
+            } catch (urlError) {
+                console.error('Error copying URL:', urlError);
+                alert('Failed to copy image. Please try downloading instead.');
+            }
+        }
+    }
+    
+    createCopyableImage(imageUrl) {
+        // Create a temporary modal with the image for manual copying
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            flex-direction: column;
+        `;
+        
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.style.cssText = `
+            max-width: 90%;
+            max-height: 80%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        `;
+        
+        const instructions = document.createElement('div');
+        instructions.innerHTML = `
+            <div style="color: white; text-align: center; margin-top: 20px; padding: 20px;">
+                <p style="font-size: 18px; margin-bottom: 10px;">Right-click the image above and select "Copy image"</p>
+                <p style="font-size: 14px; opacity: 0.8;">This will copy the actual image content to your clipboard</p>
+                <button id="closeCopyModal" style="
+                    margin-top: 15px;
+                    padding: 10px 20px;
+                    background: #667eea;
+                    color: white;
+                    border: none;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 14px;
+                ">Close</button>
+            </div>
+        `;
+        
+        modal.appendChild(img);
+        modal.appendChild(instructions);
+        document.body.appendChild(modal);
+        
+        // Close modal when clicking close button or outside
+        const closeBtn = modal.querySelector('#closeCopyModal');
+        const closeModal = () => {
+            if (modal.parentNode) {
+                modal.parentNode.removeChild(modal);
+            }
+        };
+        
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Close on escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+    
+    showCopySuccess(message = '✓ Image copied to clipboard!') {
+        // Create a temporary success message
+        const successMsg = document.createElement('div');
+        successMsg.textContent = message;
+        successMsg.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+        `;
+        
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        document.body.appendChild(successMsg);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            if (successMsg.parentNode) {
+                successMsg.parentNode.removeChild(successMsg);
+            }
+            if (style.parentNode) {
+                style.parentNode.removeChild(style);
+            }
+        }, 3000);
     }
     
     // Create Image Modal Functions
@@ -489,6 +686,48 @@ class MarsMediaGallery {
         link.click();
         document.body.removeChild(link);
     }
+
+    // Helper function to create thumbnail
+    async createThumbnail(sourceCanvas, maxSize) {
+        const { width, height } = sourceCanvas;
+        
+        // Calculate new dimensions while maintaining aspect ratio
+        let newWidth, newHeight;
+        if (width > height) {
+            newWidth = Math.min(width, maxSize);
+            newHeight = (height * newWidth) / width;
+        } else {
+            newHeight = Math.min(height, maxSize);
+            newWidth = (width * newHeight) / height;
+        }
+        
+        // Create thumbnail canvas
+        const thumbCanvas = document.createElement('canvas');
+        const thumbCtx = thumbCanvas.getContext('2d');
+        
+        thumbCanvas.width = newWidth;
+        thumbCanvas.height = newHeight;
+        
+        // Draw resized image
+        thumbCtx.drawImage(sourceCanvas, 0, 0, newWidth, newHeight);
+        
+        // Convert to blob
+        return new Promise(resolve => {
+            thumbCanvas.toBlob(resolve, 'image/jpeg', 0.85); // Use JPEG for smaller thumbnails
+        });
+    }
+
+    // Helper function to generate thumbnail filename
+    getThumbnailFileName(originalFileName) {
+        const lastDotIndex = originalFileName.lastIndexOf('.');
+        if (lastDotIndex !== -1) {
+            const nameWithoutExt = originalFileName.substring(0, lastDotIndex);
+            const ext = originalFileName.substring(lastDotIndex);
+            return `${nameWithoutExt}-thumb.jpg`; // Always use .jpg for thumbnails
+        } else {
+            return `${originalFileName}-thumb.jpg`;
+        }
+    }
     
     async uploadToSupabase() {
         try {
@@ -496,8 +735,8 @@ class MarsMediaGallery {
             this.uploadBtn.disabled = true;
             this.uploadBtn.textContent = 'Uploading...';
             
-            // Convert canvas to blob
-            const blob = await new Promise(resolve => {
+            // Convert canvas to blob (full size)
+            const fullSizeBlob = await new Promise(resolve => {
                 if (this.originalFormat === 'image/jpeg' || this.originalFormat === 'image/jpg') {
                     this.canvas.toBlob(resolve, 'image/jpeg', 0.95);
                 } else if (this.originalFormat === 'image/webp') {
@@ -506,6 +745,9 @@ class MarsMediaGallery {
                     this.canvas.toBlob(resolve, 'image/png');
                 }
             });
+
+            // Create thumbnail
+            const thumbnailBlob = await this.createThumbnail(this.canvas, 300); // 300px max width/height
             
             // Generate filename
             let fileName;
@@ -523,35 +765,64 @@ class MarsMediaGallery {
                 const timestamp = Date.now();
                 fileName = `image-overlay-${timestamp}.png`;
             }
+
+            // Generate thumbnail filename
+            const thumbFileName = this.getThumbnailFileName(fileName);
             
-            // Upload to Supabase storage
+            // Upload full-size image to Supabase storage
+            this.uploadBtn.textContent = 'Uploading full image...';
             const filePath = `public/${fileName}`;
             const { data, error } = await this.supabase.storage
                 .from('unapproved')
-                .upload(filePath, blob, {
-                    contentType: blob.type,
+                .upload(filePath, fullSizeBlob, {
+                    contentType: fullSizeBlob.type,
                     upsert: false // Disallow overwriting if file exists
                 });
             
             if (error) {
                 throw error;
             }
+
+            // Upload thumbnail to Supabase storage
+            this.uploadBtn.textContent = 'Uploading thumbnail...';
+            const thumbFilePath = `public/${thumbFileName}`;
+            const { data: thumbData, error: thumbError } = await this.supabase.storage
+                .from('unapproved')
+                .upload(thumbFilePath, thumbnailBlob, {
+                    contentType: thumbnailBlob.type,
+                    upsert: false
+                });
             
-            // Get public URL
+            if (thumbError) {
+                console.error('Thumbnail upload error:', thumbError);
+                // Continue without thumbnail - not critical
+            }
+            
+            // Get public URLs
             const { data: urlData } = this.supabase.storage
                 .from('unapproved')
                 .getPublicUrl(filePath);
 
+            const { data: thumbUrlData } = this.supabase.storage
+                .from('unapproved')
+                .getPublicUrl(thumbFilePath);
+
             // Insert record into Images table
+            this.uploadBtn.textContent = 'Saving to database...';
+            const imageRecord = {
+                name: filePath,
+                url: urlData.publicUrl,
+                bucket: 'unapproved'
+            };
+
+            // Add thumbnail URL if upload was successful
+            if (!thumbError && thumbUrlData) {
+                imageRecord.thumbnail_url = thumbUrlData.publicUrl;
+            }
+
             const { data: insertData, error: insertError } = await this.supabase
                 .from('images')
-                .insert([
-                    {
-                        name: filePath,
-                        url: urlData.publicUrl,
-                        bucket: 'unapproved'
-                    }
-                ])
+                .insert([imageRecord])
                 .select();
             
             if (insertError) {
