@@ -173,7 +173,8 @@ header p {
 
 .image-item img {
     width: 100%;
-    aspect-ratio: 3/4; /* Perfect for portrait images */
+    aspect-ratio: 3/4;
+    /* Perfect for portrait images */
     object-fit: contain;
     background-color: #f8f9fa;
 }
