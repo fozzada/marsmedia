@@ -175,7 +175,7 @@ class MarsMediaGallery {
     }
     
     toggleTagFilter(tagEl) {
-        const tagId = parseInt(tagEl.dataset.tagId);
+        const tagId = tagEl.dataset.tagId; // Keep as string since it's a GUID
         
         if (tagEl.classList.contains('active')) {
             tagEl.classList.remove('active');
