@@ -1,5 +1,22 @@
-class ImageOverlay {
+class MarsMediaGallery {
     constructor() {
+        // Initialize Supabase
+        this.supabaseUrl = 'https://nhsucumstmojfainalvp.supabase.co';
+        this.supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oc3VjdW1zdG1vamZhaW5hbHZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2ODQzOTAsImV4cCI6MjA2OTI2MDM5MH0.0TWbFkkn9ihIUhkqT_dN8VpdjGXRIeyJIsTACPTRKUk';
+        this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseAnonKey);
+        
+        // Gallery elements
+        this.searchInput = document.getElementById('searchInput');
+        this.searchBtn = document.getElementById('searchBtn');
+        this.tagsFilter = document.getElementById('tagsFilter');
+        this.clearFiltersBtn = document.getElementById('clearFiltersBtn');
+        this.imagesGrid = document.getElementById('imagesGrid');
+        this.imageCount = document.getElementById('imageCount');
+        
+        // Create image modal elements
+        this.createImageBtn = document.getElementById('createImageBtn');
+        this.createImageModal = document.getElementById('createImageModal');
+        this.closeCreateModal = document.getElementById('closeCreateModal');
         this.canvas = document.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');
         this.uploadArea = document.getElementById('uploadArea');
@@ -9,44 +26,66 @@ class ImageOverlay {
         this.uploadBtn = document.getElementById('uploadBtn');
         this.resetBtn = document.getElementById('resetBtn');
         
-        // Initialize Supabase
-        this.supabaseUrl = 'https://nhsucumstmojfainalvp.supabase.co';
-        this.supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5oc3VjdW1zdG1vamZhaW5hbHZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2ODQzOTAsImV4cCI6MjA2OTI2MDM5MH0.0TWbFkkn9ihIUhkqT_dN8VpdjGXRIeyJIsTACPTRKUk';
-        this.supabase = supabase.createClient(this.supabaseUrl, this.supabaseAnonKey);
+        // Image view modal elements
+        this.imageViewModal = document.getElementById('imageViewModal');
+        this.closeImageModal = document.getElementById('closeImageModal');
+        this.imageModalTitle = document.getElementById('imageModalTitle');
+        this.imageModalMeta = document.getElementById('imageModalMeta');
+        this.imageModalImg = document.getElementById('imageModalImg');
+        this.imageModalTags = document.getElementById('imageModalTags');
+        this.downloadImageBtn = document.getElementById('downloadImageBtn');
         
         // Text to overlay
         this.contractAddress = 'Cfmo6asAsZFx6GGQvAt4Ajxn8hN6vgWGpaSrjQKRpump';
         this.xHandle = '@MarsPygmySOL';
         this.projectName = 'Mars on Pump';
         
-        // Store original file info
+        // Store data
         this.originalFile = null;
         this.originalFormat = 'png';
+        this.allImages = [];
+        this.allTags = [];
+        this.selectedTags = [];
+        this.currentImage = null;
         
         this.initEventListeners();
+        this.loadGalleryData();
     }
     
     initEventListeners() {
-        // Upload area click
-        this.uploadArea.addEventListener('click', () => {
-            this.imageInput.click();
+        // Gallery search and filters
+        this.searchBtn.addEventListener('click', () => this.filterImages());
+        this.searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.filterImages();
+        });
+        this.clearFiltersBtn.addEventListener('click', () => this.clearFilters());
+        
+        // Create image modal
+        this.createImageBtn.addEventListener('click', () => this.openCreateModal());
+        this.closeCreateModal.addEventListener('click', () => this.closeCreateModalHandler());
+        
+        // Image view modal
+        this.closeImageModal.addEventListener('click', () => this.closeImageModalHandler());
+        this.downloadImageBtn.addEventListener('click', () => this.downloadCurrentImage());
+        
+        // Close modals on outside click
+        this.createImageModal.addEventListener('click', (e) => {
+            if (e.target === this.createImageModal) this.closeCreateModalHandler();
+        });
+        this.imageViewModal.addEventListener('click', (e) => {
+            if (e.target === this.imageViewModal) this.closeImageModalHandler();
         });
         
-        // File input change
-        this.imageInput.addEventListener('change', (e) => {
-            this.handleFileSelect(e.target.files[0]);
-        });
-        
-        // Drag and drop
+        // Upload functionality
+        this.uploadArea.addEventListener('click', () => this.imageInput.click());
+        this.imageInput.addEventListener('change', (e) => this.handleFileSelect(e.target.files[0]));
         this.uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
             this.uploadArea.classList.add('dragover');
         });
-        
         this.uploadArea.addEventListener('dragleave', () => {
             this.uploadArea.classList.remove('dragover');
         });
-        
         this.uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             this.uploadArea.classList.remove('dragover');
@@ -56,21 +95,234 @@ class ImageOverlay {
             }
         });
         
-        // Download button
-        this.downloadBtn.addEventListener('click', () => {
-            this.downloadImage();
-        });
+        // Canvas functionality
+        this.downloadBtn.addEventListener('click', () => this.downloadImage());
+        this.uploadBtn.addEventListener('click', () => this.uploadToSupabase());
+        this.resetBtn.addEventListener('click', () => this.resetUpload());
+    }
+    
+    async loadGalleryData() {
+        await Promise.all([
+            this.loadApprovedImages(),
+            this.loadTags()
+        ]);
+        this.renderGallery();
+    }
+    
+    async loadApprovedImages() {
+        try {
+            // Load approved images with their tags
+            const { data: images, error } = await this.supabase
+                .from('approved_images')
+                .select(`
+                    id,
+                    name,
+                    url,
+                    bucket,
+                    original_upload_date,
+                    approved_at,
+                    image_tags:image_tags(tag_id, tags:tags(id, name))
+                `)
+                .order('approved_at', { ascending: false });
+            
+            if (error) {
+                console.error('Failed to load approved images:', error);
+                this.showError('Failed to load images');
+                return;
+            }
+            
+            this.allImages = images || [];
+            console.log('Loaded approved images:', this.allImages);
+        } catch (error) {
+            console.error('Error loading approved images:', error);
+            this.showError('Error loading images');
+        }
+    }
+    
+    async loadTags() {
+        try {
+            const { data: tags, error } = await this.supabase
+                .from('tags')
+                .select('*')
+                .order('name');
+            
+            if (error) {
+                console.error('Failed to load tags:', error);
+                return;
+            }
+            
+            this.allTags = tags || [];
+            this.renderTagsFilter();
+        } catch (error) {
+            console.error('Error loading tags:', error);
+        }
+    }
+    
+    renderTagsFilter() {
+        if (this.allTags.length === 0) {
+            this.tagsFilter.innerHTML = '<div class="no-data">No tags available</div>';
+            return;
+        }
         
-        // Upload button
-        this.uploadBtn.addEventListener('click', () => {
-            this.uploadToSupabase();
-        });
+        this.tagsFilter.innerHTML = this.allTags.map(tag => 
+            `<div class="tag-filter" data-tag-id="${tag.id}">${tag.name}</div>`
+        ).join('');
         
-        // Reset button
-        this.resetBtn.addEventListener('click', () => {
-            this.resetUpload();
+        // Add click listeners to tag filters
+        this.tagsFilter.querySelectorAll('.tag-filter').forEach(tagEl => {
+            tagEl.addEventListener('click', () => this.toggleTagFilter(tagEl));
         });
     }
+    
+    toggleTagFilter(tagEl) {
+        const tagId = parseInt(tagEl.dataset.tagId);
+        
+        if (tagEl.classList.contains('active')) {
+            tagEl.classList.remove('active');
+            this.selectedTags = this.selectedTags.filter(id => id !== tagId);
+        } else {
+            tagEl.classList.add('active');
+            this.selectedTags.push(tagId);
+        }
+        
+        this.filterImages();
+    }
+    
+    filterImages() {
+        const searchTerm = this.searchInput.value.toLowerCase().trim();
+        
+        let filteredImages = this.allImages;
+        
+        // Filter by search term
+        if (searchTerm) {
+            filteredImages = filteredImages.filter(image => 
+                image.name.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        // Filter by selected tags
+        if (this.selectedTags.length > 0) {
+            filteredImages = filteredImages.filter(image => {
+                const imageTags = image.image_tags?.map(it => it.tag_id) || [];
+                return this.selectedTags.some(tagId => imageTags.includes(tagId));
+            });
+        }
+        
+        this.renderGallery(filteredImages);
+    }
+    
+    clearFilters() {
+        this.searchInput.value = '';
+        this.selectedTags = [];
+        this.tagsFilter.querySelectorAll('.tag-filter').forEach(tagEl => {
+            tagEl.classList.remove('active');
+        });
+        this.renderGallery();
+    }
+    
+    renderGallery(imagesToShow = null) {
+        const images = imagesToShow || this.allImages;
+        
+        // Update count
+        this.imageCount.textContent = `${images.length} image${images.length !== 1 ? 's' : ''} available`;
+        
+        if (images.length === 0) {
+            this.imagesGrid.innerHTML = '<div class="no-data">No images found</div>';
+            return;
+        }
+        
+        this.imagesGrid.innerHTML = images.map(image => {
+            const imageTags = image.image_tags?.map(it => it.tags?.name).filter(Boolean) || [];
+            const uploadDate = new Date(image.original_upload_date || image.approved_at).toLocaleDateString();
+            
+            return `
+                <div class="image-item" data-image-id="${image.id}">
+                    <img src="${image.url}" alt="${image.name}" loading="lazy">
+                    <div class="image-info">
+                        <h4>${image.name}</h4>
+                        <div class="date">Uploaded: ${uploadDate}</div>
+                        <div class="image-tags-list">
+                            ${imageTags.map(tag => `<span class="tag-pill-small">${tag}</span>`).join('')}
+                        </div>
+                        <button class="download-btn" onclick="event.stopPropagation(); marsGallery.downloadImageDirect('${image.url}', '${image.name}')">
+                            Download
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        // Add click listeners to image items
+        this.imagesGrid.querySelectorAll('.image-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const imageId = parseInt(item.dataset.imageId);
+                this.openImageModal(imageId);
+            });
+        });
+    }
+    
+    openImageModal(imageId) {
+        const image = this.allImages.find(img => img.id === imageId);
+        if (!image) return;
+        
+        this.currentImage = image;
+        this.imageModalTitle.textContent = image.name;
+        this.imageModalImg.src = image.url;
+        
+        const uploadDate = new Date(image.original_upload_date || image.approved_at).toLocaleDateString();
+        this.imageModalMeta.textContent = `Uploaded: ${uploadDate}`;
+        
+        // Display tags
+        const imageTags = image.image_tags?.map(it => it.tags?.name).filter(Boolean) || [];
+        if (imageTags.length > 0) {
+            this.imageModalTags.innerHTML = `
+                <h4>Tags:</h4>
+                <div class="image-tags-list">
+                    ${imageTags.map(tag => `<span class="tag-pill-small">${tag}</span>`).join('')}
+                </div>
+            `;
+        } else {
+            this.imageModalTags.innerHTML = '<div class="no-data">No tags</div>';
+        }
+        
+        this.imageViewModal.style.display = 'block';
+    }
+    
+    closeImageModalHandler() {
+        this.imageViewModal.style.display = 'none';
+        this.currentImage = null;
+    }
+    
+    downloadCurrentImage() {
+        if (this.currentImage) {
+            this.downloadImageDirect(this.currentImage.url, this.currentImage.name);
+        }
+    }
+    
+    async downloadImageDirect(imageUrl, imageName) {
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = imageName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        } catch (error) {
+            console.error('Error downloading image:', error);
+            alert('Failed to download image. Please try again.');
+        }
+    }
+    
+    // Create Image Modal Functions
+    openCreateModal() {
+        this.createImageModal.style.display = 'block';
+        this.resetUpload();
+    }
+    
     
     handleFileSelect(file) {
         if (!file || !file.type.startsWith('image/')) {
@@ -335,11 +587,18 @@ class ImageOverlay {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
+    
+    showError(message) {
+        this.imagesGrid.innerHTML = `<div class="error">${message}</div>`;
+    }
 }
+
+// Global variable for access from inline event handlers
+let marsGallery;
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new ImageOverlay();
+    marsGallery = new MarsMediaGallery();
 });
 
 // Prevent default drag behaviors on the document
