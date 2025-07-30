@@ -9,7 +9,6 @@ class MarsMediaGallery {
         this.tagsFilter = document.getElementById('tagsFilter');
         this.clearFiltersBtn = document.getElementById('clearFiltersBtn');
         this.imagesGrid = document.getElementById('imagesGrid');
-        this.imageCount = document.getElementById('imageCount');
         
         // Upload elements (now inline)
         this.canvas = document.getElementById('canvas');
@@ -197,9 +196,6 @@ class MarsMediaGallery {
     
     renderGallery(imagesToShow = null) {
         const images = imagesToShow || this.allImages;
-        
-        // Update count
-        this.imageCount.textContent = `${images.length} image${images.length !== 1 ? 's' : ''} available`;
         
         if (images.length === 0) {
             this.imagesGrid.innerHTML = '<div class="no-data">No images found</div>';

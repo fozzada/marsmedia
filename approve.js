@@ -399,7 +399,8 @@ Technical details: ${error.message}`);
     }
     
     async deleteTag(tagId, tagName) {
-        if (!confirm(`Are you sure you want to delete the tag "${tagName}"?`)) {
+        // Show confirmation toast instead of prompt
+        if (!await this.showConfirmationToast(`Delete tag "${tagName}"?`)) {
             return;
         }
         
@@ -422,10 +423,11 @@ Technical details: ${error.message}`);
             
             await this.loadTags();
             this.updateStats();
+            this.showToast(`Tag "${tagName}" deleted successfully!`, 'success');
             
         } catch (error) {
             console.error('Delete tag error:', error);
-            alert(`Failed to delete tag: ${error.message}`);
+            this.showToast(`Failed to delete tag: ${error.message}`, 'error');
         }
     }
     
@@ -451,7 +453,8 @@ Technical details: ${error.message}`);
     }
     
     async approveImageDirect(imageId, imageName) {
-        if (!confirm(`Approve image "${imageName}"?`)) {
+        // Show confirmation toast instead of prompt
+        if (!await this.showConfirmationToast(`Approve image "${imageName}"?`)) {
             return;
         }
         
@@ -622,18 +625,19 @@ Technical details: ${error.message}`);
                 throw new Error(`Failed to delete from images table: ${deleteRowError.message}`);
             }
             
-            alert('Image approved successfully!');
+            this.showToast('Image approved successfully!', 'success');
             await this.loadPendingImages();
             this.updateStats();
             
         } catch (error) {
             console.error('Approve error:', error);
-            alert(`Failed to approve image: ${error.message}`);
+            this.showToast(`Failed to approve image: ${error.message}`, 'error');
         }
     }
     
     async rejectImageDirect(imageId, imageName) {
-        if (!confirm(`Reject and permanently delete image "${imageName}"?`)) {
+        // Show confirmation toast instead of prompt
+        if (!await this.showConfirmationToast(`Reject and permanently delete image "${imageName}"?`)) {
             return;
         }
         
@@ -685,14 +689,173 @@ Technical details: ${error.message}`);
                 throw new Error(`Failed to delete from images table: ${deleteRowError.message}`);
             }
             
-            alert('Image rejected and deleted successfully!');
+            this.showToast('Image rejected and deleted successfully!', 'success');
             await this.loadPendingImages();
             this.updateStats();
             
         } catch (error) {
             console.error('Reject error:', error);
-            alert(`Failed to reject image: ${error.message}`);
+            this.showToast(`Failed to reject image: ${error.message}`, 'error');
         }
+    }
+    
+    showToast(message = '✓ Success!', type = 'success') {
+        // Create a temporary success message
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        
+        let backgroundColor, textColor;
+        switch(type) {
+            case 'success':
+                backgroundColor = '#4CAF50';
+                textColor = 'white';
+                break;
+            case 'error':
+                backgroundColor = '#f44336';
+                textColor = 'white';
+                break;
+            case 'warning':
+                backgroundColor = '#ff9800';
+                textColor = 'white';
+                break;
+            default:
+                backgroundColor = '#4CAF50';
+                textColor = 'white';
+        }
+        
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${backgroundColor};
+            color: ${textColor};
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        `;
+        
+        // Add CSS animation if not already added
+        if (!document.querySelector('#toast-animation-style')) {
+            const style = document.createElement('style');
+            style.id = 'toast-animation-style';
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(toast);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+    
+    showConfirmationToast(message) {
+        return new Promise((resolve) => {
+            // Create confirmation modal
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-family: 'Poppins', sans-serif;
+            `;
+            
+            const dialog = document.createElement('div');
+            dialog.style.cssText = `
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
+                backdrop-filter: blur(20px);
+                border-radius: 20px;
+                padding: 30px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                text-align: center;
+                min-width: 300px;
+                color: white;
+            `;
+            
+            dialog.innerHTML = `
+                <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.95);">${message}</h3>
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button id="confirmYes" style="
+                        background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+                        color: white;
+                        border: none;
+                        padding: 12px 24px;
+                        border-radius: 25px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+                    ">Yes</button>
+                    <button id="confirmNo" style="
+                        background: rgba(255, 255, 255, 0.1);
+                        backdrop-filter: blur(10px);
+                        color: rgba(255, 255, 255, 0.9);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        padding: 12px 24px;
+                        border-radius: 25px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">Cancel</button>
+                </div>
+            `;
+            
+            modal.appendChild(dialog);
+            document.body.appendChild(modal);
+            
+            const cleanup = () => {
+                if (modal.parentNode) {
+                    modal.parentNode.removeChild(modal);
+                }
+            };
+            
+            // Event listeners
+            dialog.querySelector('#confirmYes').addEventListener('click', () => {
+                cleanup();
+                resolve(true);
+            });
+            
+            dialog.querySelector('#confirmNo').addEventListener('click', () => {
+                cleanup();
+                resolve(false);
+            });
+            
+            // Close on escape or outside click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    cleanup();
+                    resolve(false);
+                }
+            });
+            
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    cleanup();
+                    resolve(false);
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+        });
     }
 }
 
