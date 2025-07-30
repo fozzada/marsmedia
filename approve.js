@@ -800,10 +800,10 @@ Technical details: ${error.message}`);
             `;
             
             dialog.innerHTML = `
-                <h3 style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.95);">${message}</h3>
+                <h3 style="margin-bottom: 20px; color: rgba(224, 224, 224, 0.95);">${message}</h3>
                 <div style="display: flex; gap: 15px; justify-content: center;">
                     <button id="confirmYes" style="
-                        background: linear-gradient(135deg, #22d3ee 0%, #06b6d4 100%);
+                        background: linear-gradient(135deg, #66C2D7 0%, #4A9FBF 100%);
                         color: white;
                         border: none;
                         padding: 12px 24px;
@@ -811,13 +811,13 @@ Technical details: ${error.message}`);
                         font-weight: 600;
                         cursor: pointer;
                         transition: all 0.3s ease;
-                        box-shadow: 0 4px 15px rgba(34, 211, 238, 0.3);
+                        box-shadow: 0 4px 15px rgba(102, 194, 215, 0.3);
                     ">Yes</button>
                     <button id="confirmNo" style="
-                        background: rgba(255, 255, 255, 0.1);
+                        background: rgba(184, 160, 130, 0.1);
                         backdrop-filter: blur(10px);
-                        color: rgba(255, 255, 255, 0.9);
-                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        color: rgba(224, 224, 224, 0.9);
+                        border: 1px solid rgba(184, 160, 130, 0.2);
                         padding: 12px 24px;
                         border-radius: 25px;
                         font-weight: 600;

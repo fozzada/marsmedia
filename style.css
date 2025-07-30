@@ -6,18 +6,11 @@
 
 body {
     font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    background: linear-gradient(135deg, #2f1c6a 0%, #8c85ff 50%, #2f1c6a 100%);
-    background-size: 400% 400%;
-    animation: marsGradient 15s ease infinite;
+    background: linear-gradient(135deg, #2F2F2F 0%, #3A3A3A 100%);
     min-height: 100vh;
-    color: #333;
+    color: #E0E0E0;
 }
 
-@keyframes marsGradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
 
 .container {
     max-width: 1400px;
@@ -44,7 +37,7 @@ body {
     font-size: 2.8rem;
     font-weight: 800;
     margin-bottom: 15px;
-    background: linear-gradient(45deg, #fff, #8c85ff, #fff);
+    background: linear-gradient(45deg, #66C2D7, #B8A082, #66C2D7);
     background-size: 200% 200%;
     animation: shimmer 3s ease-in-out infinite;
     -webkit-background-clip: text;
@@ -59,7 +52,7 @@ body {
 
 .mars-subtitle {
     font-size: 1.2rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(224, 224, 224, 0.9);
     font-weight: 500;
     line-height: 1.5;
 }
@@ -89,7 +82,7 @@ body {
 .filter-label {
     font-size: 1rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(224, 224, 224, 0.9);
     white-space: nowrap;
 }
 
@@ -101,36 +94,36 @@ body {
 }
 
 .tag-filter {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(102, 194, 215, 0.15);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(102, 194, 215, 0.2);
     padding: 2px 8px;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.7rem;
     font-weight: 500;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(224, 224, 224, 0.9);
     white-space: nowrap;
 }
 
 .tag-filter:hover {
-    background: rgba(255, 255, 255, 0.25);
+    background: rgba(102, 194, 215, 0.25);
     transform: translateY(-1px);
 }
 
 .tag-filter.active {
-    background: linear-gradient(135deg, #8c85ff 0%, #2f1c6a 100%);
+    background: linear-gradient(135deg, #66C2D7 0%, #B8A082 100%);
     color: white;
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(140, 133, 255, 0.3);
+    border-color: rgba(102, 194, 215, 0.5);
+    box-shadow: 0 4px 15px rgba(102, 194, 215, 0.3);
 }
 
 .btn-clear {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(184, 160, 130, 0.1);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(184, 160, 130, 0.2);
+    color: rgba(224, 224, 224, 0.8);
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 0.7rem;
@@ -141,8 +134,8 @@ body {
 }
 
 .btn-clear:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
+    background: rgba(184, 160, 130, 0.2);
+    color: #E0E0E0;
 }
 
 /* Gallery Section */
@@ -160,7 +153,7 @@ body {
 .gallery-title {
     font-size: 1.8rem;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.95);
+    color: rgba(224, 224, 224, 0.95);
     margin: 0;
 }
 
@@ -173,7 +166,7 @@ body {
 }
 
 .image-count {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(224, 224, 224, 0.9);
     font-weight: 600;
     font-size: 0.9rem;
 }
@@ -197,7 +190,7 @@ body {
 .image-item:hover {
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    border-color: rgba(140, 133, 255, 0.5);
+    border-color: rgba(102, 194, 215, 0.5);
 }
 
 .image-container {
@@ -251,11 +244,11 @@ body {
 }
 
 .copy-btn {
-    color: #8c85ff;
+    color: #66C2D7;
 }
 
 .copy-btn:hover {
-    color: #2f1c6a;
+    color: #4A9FBF;
 }
 
 .download-btn {
@@ -276,13 +269,13 @@ body {
 }
 
 .tag-pill-small {
-    background: linear-gradient(135deg, #8c85ff 0%, #2f1c6a 100%);
+    background: linear-gradient(135deg, #66C2D7 0%, #B8A082 100%);
     color: white;
     padding: 2px 6px;
     border-radius: 8px;
     font-size: 0.65rem;
     font-weight: 500;
-    box-shadow: 0 2px 8px rgba(140, 133, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(102, 194, 215, 0.2);
 }
 
 /* Upload Section */
@@ -303,13 +296,13 @@ body {
 .upload-title {
     font-size: 1.6rem;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.95);
+    color: rgba(224, 224, 224, 0.95);
     margin-bottom: 8px;
 }
 
 .upload-subtitle {
     font-size: 1rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(224, 224, 224, 0.8);
     font-weight: 500;
 }
 
@@ -326,8 +319,8 @@ body {
 
 .upload-area:hover,
 .upload-area.dragover {
-    border-color: #8c85ff;
-    background: rgba(140, 133, 255, 0.1);
+    border-color: #66C2D7;
+    background: rgba(102, 194, 215, 0.1);
     transform: translateY(-2px);
 }
 
@@ -345,12 +338,12 @@ body {
 
 .upload-text {
     font-size: 1.1rem;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(224, 224, 224, 0.8);
     margin: 0;
 }
 
 .upload-link {
-    color: #8c85ff;
+    color: #66C2D7;
     font-weight: 600;
     text-decoration: underline;
 }
@@ -379,7 +372,7 @@ body {
     font-weight: 500;
     margin: 0;
     font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(224, 224, 224, 0.9);
 }
 
 .upload-info.upload-success {
@@ -419,7 +412,7 @@ body {
 
 /* Mars Buttons */
 .btn-mars-primary {
-    background: linear-gradient(135deg, #8c85ff 0%, #2f1c6a 100%);
+    background: linear-gradient(135deg, #66C2D7 0%, #4A9FBF 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -428,19 +421,19 @@ body {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(140, 133, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(102, 194, 215, 0.3);
 }
 
 .btn-mars-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(140, 133, 255, 0.4);
+    box-shadow: 0 8px 25px rgba(102, 194, 215, 0.4);
 }
 
 .btn-mars-secondary {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(184, 160, 130, 0.1);
     backdrop-filter: blur(10px);
-    color: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(224, 224, 224, 0.9);
+    border: 1px solid rgba(184, 160, 130, 0.2);
     padding: 12px 24px;
     border-radius: 25px;
     font-size: 1rem;
@@ -450,7 +443,7 @@ body {
 }
 
 .btn-mars-secondary:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(184, 160, 130, 0.2);
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
@@ -549,7 +542,7 @@ body {
 }
 
 .modal-action-btn.copy-btn:hover {
-    color: #8c85ff;
+    color: #66C2D7;
 }
 
 .modal-action-btn.download-btn:hover {
@@ -560,7 +553,7 @@ body {
     position: absolute;
     top: 20px;
     right: 25px;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(224, 224, 224, 0.8);
     font-size: 32px;
     font-weight: bold;
     cursor: pointer;
@@ -577,7 +570,7 @@ body {
 }
 
 .close:hover {
-    color: white;
+    color: #E0E0E0;
     background: rgba(0, 0, 0, 0.7);
     transform: scale(1.1);
 }
@@ -586,7 +579,7 @@ body {
 .loading {
     text-align: center;
     padding: 40px;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(224, 224, 224, 0.7);
     font-style: italic;
     font-size: 1.1rem;
 }
@@ -594,7 +587,7 @@ body {
 .no-data {
     text-align: center;
     padding: 40px;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(224, 224, 224, 0.6);
     font-style: italic;
 }
 
@@ -689,8 +682,8 @@ body {
     width: 20px;
     height: 20px;
     margin: 15px auto 0;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(224, 224, 224, 0.3);
+    border-top: 2px solid rgba(224, 224, 224, 0.8);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
