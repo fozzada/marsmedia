@@ -582,11 +582,11 @@ class MarsMediaGallery {
     addElegantText(ctx, text, x, y, align, fontSize) {
         ctx.textAlign = align;
         
-        // Create very subtle text similar to center watermark visibility
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // Much more transparent like center watermark
+        // Draw the text with subtle visibility like center watermark
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; // Much more transparent like center watermark
         ctx.shadowColor = 'rgba(0, 0, 0, 0.1)'; // Very subtle shadow
-        ctx.shadowBlur = 2;
-        ctx.shadowOffsetX = 0.5;
+        ctx.shadowBlur = 1;
+        ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0.5;
         
         ctx.fillText(text, x, y);
