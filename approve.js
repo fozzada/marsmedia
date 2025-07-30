@@ -260,8 +260,8 @@ Technical details: ${error.message}`);
                         <p>${new Date(image.uploaded_at).toLocaleDateString()}</p>
                         <div class="image-tags">
                             <label>Tags:</label>
-                            <div class="tags-selection" id="tags-${image.id}">
-                                <!-- Tags will be populated here -->
+                            <div class="tags-pills-selection" id="tags-${image.id}">
+                                <!-- Tag pills will be populated here -->
                             </div>
                         </div>
                         <div class="image-actions">
@@ -326,16 +326,24 @@ Technical details: ${error.message}`);
                 return;
             }
             
-            // Populate tag checkboxes for each image
+            // Populate tag pills for each image
             images.forEach(image => {
                 const tagsContainer = document.getElementById(`tags-${image.id}`);
                 if (tagsContainer && tags) {
                     tagsContainer.innerHTML = tags.map(tag => `
-                        <label class="tag-checkbox-small">
-                            <input type="checkbox" value="${tag.id}" data-tag-name="${tag.name}">
-                            <span>${tag.name}</span>
-                        </label>
+                        <div class="tag-pill-selectable" data-tag-id="${tag.id}" data-tag-name="${tag.name}">
+                            ${tag.name}
+                        </div>
                     `).join('');
+                    
+                    // Add click listeners to tag pills for this image
+                    tagsContainer.querySelectorAll('.tag-pill-selectable').forEach(pill => {
+                        pill.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            pill.classList.toggle('selected');
+                        });
+                    });
                 }
             });
         } catch (error) {
@@ -464,11 +472,11 @@ Technical details: ${error.message}`);
             // Get selected tags for this image
             const tagsContainer = document.getElementById(`tags-${imageId}`);
             const selectedTags = tagsContainer ? 
-                Array.from(tagsContainer.querySelectorAll('input[type="checkbox"]:checked'))
-                    .map(cb => {
-                        const tagId = cb.value; // Keep as string since it's a GUID
-                        const tagName = cb.dataset.tagName;
-                        console.log('Processing checkbox:', cb.value, 'GUID:', tagId, 'name:', tagName);
+                Array.from(tagsContainer.querySelectorAll('.tag-pill-selectable.selected'))
+                    .map(pill => {
+                        const tagId = pill.dataset.tagId; // Keep as string since it's a GUID
+                        const tagName = pill.dataset.tagName;
+                        console.log('Processing selected pill:', tagId, 'name:', tagName);
                         return { id: tagId, name: tagName };
                     }) : [];
             
