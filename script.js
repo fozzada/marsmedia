@@ -625,16 +625,6 @@ class MarsMediaGallery {
                 );
             }
             
-            // Optionally copy URL to clipboard
-            if (navigator.clipboard) {
-                try {
-                    await navigator.clipboard.writeText(urlData.publicUrl);
-                    console.log('URL copied to clipboard');
-                } catch (clipboardError) {
-                    console.log('Could not copy to clipboard:', clipboardError);
-                }
-            }
-            
         } catch (error) {
             console.error('Upload error:', error);
             
