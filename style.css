@@ -143,33 +143,6 @@ body {
     margin-bottom: 30px;
 }
 
-.gallery-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-
-.gallery-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: rgba(224, 224, 224, 0.95);
-    margin: 0;
-}
-
-.gallery-stats {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.image-count {
-    color: rgba(224, 224, 224, 0.9);
-    font-weight: 600;
-    font-size: 0.9rem;
-}
 
 .images-grid {
     display: grid;
@@ -243,13 +216,6 @@ body {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-.copy-btn {
-    color: #66C2D7;
-}
-
-.copy-btn:hover {
-    color: #4A9FBF;
-}
 
 .download-btn {
     color: #4CAF50;
@@ -542,9 +508,6 @@ body {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
 }
 
-.modal-action-btn.copy-btn:hover {
-    color: #66C2D7;
-}
 
 .modal-action-btn.download-btn:hover {
     color: #4CAF50;

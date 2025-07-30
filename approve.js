@@ -27,7 +27,6 @@ class AdminDashboard {
         this.logoutBtn = document.getElementById('logoutBtn');
         this.imagesGrid = document.getElementById('imagesGrid');
         this.loadingIndicator = document.getElementById('loadingIndicator');
-        this.imageModal = document.getElementById('imageModal');
         
         // Check if critical elements exist
         if (!this.loginSection || !this.dashboardSection || !this.loginForm) {
