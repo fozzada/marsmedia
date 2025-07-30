@@ -43,20 +43,18 @@
                     <span class="stat-number" id="pendingCount">0</span>
                     <span class="stat-label">Pending Images</span>
                 </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="tagsCount">0</span>
-                    <span class="stat-label">Available Tags</span>
-                </div>
             </div>
 
             <div class="tags-section">
-                <h3>Available Tags</h3>
+                <div class="tags-row">
+                    <h3>Available Tags</h3>
+                    <div class="add-tag-compact">
+                        <input type="text" id="newTagInput" placeholder="New tag">
+                        <button id="addTagBtn" class="btn btn-secondary">+</button>
+                    </div>
+                </div>
                 <div id="allTagsContainer" class="tags-container">
                     <!-- Tags will be loaded here -->
-                </div>
-                <div class="add-tag-section">
-                    <input type="text" id="newTagInput" placeholder="Add new tag...">
-                    <button id="addTagBtn" class="btn btn-secondary">Add Tag</button>
                 </div>
             </div>
 

@@ -38,7 +38,6 @@ class AdminDashboard {
         
         // Stats
         this.pendingCount = document.getElementById('pendingCount');
-        this.tagsCount = document.getElementById('tagsCount');
         
         // Tags
         this.allTagsContainer = document.getElementById('allTagsContainer');
@@ -441,10 +440,9 @@ Technical details: ${error.message}`);
     
     updateStats() {
         const imageItems = this.imagesGrid.querySelectorAll('.image-item');
-        const tagItems = this.allTagsContainer.querySelectorAll('.tag-pill');
         
         this.pendingCount.textContent = imageItems.length;
-        this.tagsCount.textContent = tagItems.length;
+        // tagsCount element was removed from UI, no longer needed
     }
 
     // Helper function to extract filename from Supabase URL
