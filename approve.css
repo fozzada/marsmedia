@@ -158,8 +158,10 @@ body {
 }
 
 .tag-pill {
-    background: linear-gradient(135deg, #66C2D7 0%, #B8A082 100%);
-    color: white;
+    background: rgba(102, 194, 215, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(102, 194, 215, 0.2);
+    color: rgba(224, 224, 224, 0.9);
     padding: 8px 16px;
     border-radius: 20px;
     font-size: 0.9rem;
@@ -168,12 +170,11 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    box-shadow: 0 2px 8px rgba(102, 194, 215, 0.2);
 }
 
 .tag-pill:hover {
+    background: rgba(102, 194, 215, 0.25);
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(102, 194, 215, 0.3);
 }
 
 .delete-tag {
