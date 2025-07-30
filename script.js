@@ -562,43 +562,34 @@ class MarsMediaGallery {
     addTextOverlay(canvasWidth, canvasHeight) {
         const ctx = this.ctx;
         
-        // Add subtle center watermark first (so bottom overlay goes on top)
+        // Add subtle center watermark first
         this.addCenterWatermark(canvasWidth, canvasHeight);
         
-        // Scale overlay height proportionally to image size - make it higher for X visibility
-        const overlayHeight = Math.max(50, canvasHeight * 0.12); // Increased from 0.05 to 0.12
-        const overlayStartY = canvasHeight - overlayHeight;
-        const gradient = ctx.createLinearGradient(0, overlayStartY, 0, canvasHeight);
-        gradient.addColorStop(0, 'rgba(0, 0, 0, 0.3)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.5)');
+        // Calculate font size proportional to image size - elegant and readable
+        const fontSize = Math.max(12, canvasWidth / 50); // Smaller, more refined
+        ctx.font = `600 ${fontSize}px 'Poppins', 'Segoe UI', Arial, sans-serif`;
         
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, overlayStartY, canvasWidth, overlayHeight);
+        // Calculate padding from edges
+        const padding = Math.max(12, canvasWidth * 0.02);
         
-        // Text styling - lower contrast and smaller
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-        ctx.shadowBlur = Math.max(1, canvasWidth / 800);
+        // Position Twitter handle in TOP-LEFT corner of entire image
+        this.addElegantText(ctx, this.xHandle, padding, padding + fontSize, 'left', fontSize);
+        
+        // Position contract address in BOTTOM-RIGHT corner of entire image  
+        this.addElegantText(ctx, this.contractAddress, canvasWidth - padding, canvasHeight - padding, 'right', fontSize);
+    }
+    
+    addElegantText(ctx, text, x, y, align, fontSize) {
+        ctx.textAlign = align;
+        
+        // Create very subtle text similar to center watermark visibility
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)'; // Much more transparent like center watermark
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.1)'; // Very subtle shadow
+        ctx.shadowBlur = 2;
         ctx.shadowOffsetX = 0.5;
         ctx.shadowOffsetY = 0.5;
         
-        // Calculate font size proportional to image size - make it bigger
-        const fontSize = Math.max(12, canvasWidth / 45); // Increased from /60 to /45
-        ctx.font = `${fontSize}px 'Segoe UI', Arial, sans-serif`;
-        
-        // Calculate padding proportional to image size
-        const padding = Math.max(10, canvasWidth * 0.02);
-        
-        // Position text closer to top of shadowed area (about 1/3 from top instead of middle)
-        const textY = overlayStartY + overlayHeight * 0.35 - 5; // Move 5 pixels up
-        
-        // Twitter handle on the left
-        ctx.textAlign = 'left';
-        ctx.fillText(this.xHandle, padding, textY);
-        
-        // Contract address on the right
-        ctx.textAlign = 'right';
-        ctx.fillText(this.contractAddress, canvasWidth - padding, textY);
+        ctx.fillText(text, x, y);
         
         // Reset shadow
         ctx.shadowColor = 'transparent';

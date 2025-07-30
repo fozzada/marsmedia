@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-family: 'Poppins', 'Segoe UI', system-ui, -apple-system, sans-serif;
     background: linear-gradient(135deg, #2f1c6a 0%, #8c85ff 50%, #2f1c6a 100%);
     background-size: 400% 400%;
     animation: marsGradient 15s ease infinite;
