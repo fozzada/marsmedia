@@ -813,13 +813,13 @@ class MarsMediaGallery {
             if (insertError) {
                 console.error('Database insert error:', insertError);
                 this.updateUploadMessage(
-                    'Image uploaded successfully! It will appear in the gallery after being tagged and approved.',
+                    'Image uploaded! It will appear in the gallery after being tagged and approved.',
                     'success'
                 );
             } else {
                 console.log('Database insert successful:', insertData);
                 this.updateUploadMessage(
-                    'Image uploaded successfully! It will appear in the gallery after being tagged and approved.',
+                    'Image uploaded! It will appear in the gallery after being tagged and approved.',
                     'success'
                 );
             }
@@ -840,7 +840,7 @@ class MarsMediaGallery {
             // Handle specific error types
             if (error.message && error.message.includes('already exists')) {
                 this.updateUploadMessage(
-                    `A file with this name is already waiting for an approval.`,
+                    `An image with this name is already waiting for approval.`,
                     'warning'
                 );
             } else if (error.message && error.message.includes('file size')) {
