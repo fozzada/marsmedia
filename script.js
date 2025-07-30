@@ -176,11 +176,11 @@ class MarsMediaGallery {
     filterImages() {
         let filteredImages = this.allImages;
         
-        // Filter by selected tags
+        // Filter by selected tags (AND logic - image must have ALL selected tags)
         if (this.selectedTags.length > 0) {
             filteredImages = filteredImages.filter(image => {
                 const imageTags = image.image_tags?.map(it => it.tag_id) || [];
-                return this.selectedTags.some(tagId => imageTags.includes(tagId));
+                return this.selectedTags.every(tagId => imageTags.includes(tagId));
             });
         }
         
