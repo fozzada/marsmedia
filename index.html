@@ -3,49 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mars Media Gallery</title>
+    <title>Mars Image Library | Create & Share Mars-Themed Content</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Mars Media Gallery</h1>
-            <p>Browse and download Mars-themed images with @MarsPygmySOL overlay</p>
+        <header class="mars-header">
+            <div class="header-content">
+                <h1 class="mars-title">🚀 Mars Image Library</h1>
+                <p class="mars-subtitle">Create epic Mars-themed content with the @MarsPygmySOL brand overlay!</p>
+            </div>
         </header>
         
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <h2>Filter by Tags</h2>
-            <div class="tags-filter" id="tagsFilter">
-                <div class="loading">Loading tags...</div>
-            </div>
-            <button id="clearFiltersBtn" class="btn btn-secondary">Clear Filters</button>
-        </div>
-        
-        <!-- Gallery Section -->
-        <div class="gallery-section">
-            <div class="gallery-header">
-                <h2>Available Images</h2>
-                <div class="gallery-stats">
-                    <span id="imageCount">Loading...</span>
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Compact Filter Bar -->
+            <div class="filter-bar">
+                <div class="filter-content">
+                    <span class="filter-label">🏷️ Filter:</span>
+                    <div class="tags-filter-compact" id="tagsFilter">
+                        <div class="loading">Loading tags...</div>
+                    </div>
+                    <button id="clearFiltersBtn" class="btn-clear">Clear</button>
                 </div>
             </div>
-            
-            <div class="images-grid" id="imagesGrid">
-                <div class="loading">Loading images...</div>
+        
+            <!-- Gallery Section -->
+            <div class="gallery-section">
+                <div class="gallery-header">
+                    <h2 class="gallery-title">🎨 Community Gallery</h2>
+                    <div class="gallery-stats">
+                        <span id="imageCount" class="image-count">Loading...</span>
+                    </div>
+                </div>
+                
+                <div class="images-grid" id="imagesGrid">
+                    <div class="loading">Loading amazing Mars content...</div>
+                </div>
             </div>
         </div>
         
         <!-- Upload Section -->
-        <div class="upload-section-compact">
-            <h3>Create New Image</h3>
+        <div class="upload-section-mars">
+            <div class="upload-header">
+                <h3 class="upload-title">✨ Create Your Mars Masterpiece</h3>
+                <p class="upload-subtitle">Upload your image and we'll add the Mars Pygmy brand magic!</p>
+            </div>
+            
             <div class="upload-area" id="uploadArea">
                 <div class="upload-content">
-                    <svg class="upload-icon" viewBox="0 0 24 24" width="32" height="32">
-                        <path fill="currentColor" d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                    </svg>
-                    <p>Drag & drop a JPG image here or click to browse</p>
+                    <div class="upload-icon-mars">🖼️</div>
+                    <p class="upload-text">Drop your JPG here or <span class="upload-link">click to browse</span></p>
                     <input type="file" id="imageInput" accept="image/jpeg,.jpg,.jpeg" hidden>
                 </div>
             </div>
@@ -56,12 +65,12 @@
                 </div>
                 
                 <div class="upload-info" id="uploadInfo">
-                    <p class="upload-message" id="uploadMessage">Processing your image...</p>
+                    <p class="upload-message" id="uploadMessage">Processing your Mars magic...</p>
                 </div>
                 
                 <div class="controls">
-                    <button id="downloadBtn" class="btn btn-primary">Download Your Image</button>
-                    <button id="resetBtn" class="btn btn-secondary">Upload Another Image</button>
+                    <button id="downloadBtn" class="btn-mars-primary">🚀 Download Your Creation</button>
+                    <button id="resetBtn" class="btn-mars-secondary">🔄 Create Another</button>
                 </div>
             </div>
         </div>
