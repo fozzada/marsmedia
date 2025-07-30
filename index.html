@@ -82,24 +82,29 @@
     
     <!-- Image View Modal -->
     <div id="imageViewModal" class="modal" style="display: none;">
-        <div class="modal-content">
+        <div class="modal-content-minimal">
             <span class="close" id="closeImageModal">&times;</span>
-            <div class="modal-header">
-                <h3 id="imageModalTitle"></h3>
-                <div class="modal-meta" id="imageModalMeta"></div>
+            
+            <div class="modal-image-full">
+                <img id="imageModalImg" src="" alt="">
             </div>
             
-            <div class="modal-body">
-                <div class="modal-image-container">
-                    <img id="imageModalImg" src="" alt="">
-                </div>
-                
-                <div class="image-tags-display" id="imageModalTags">
+            <div class="modal-overlay-info">
+                <div class="modal-tags" id="imageModalTags">
                     <!-- Tags will be displayed here -->
                 </div>
                 
-                <div class="modal-footer">
-                    <button id="downloadImageBtn" class="btn btn-primary">Download Image</button>
+                <div class="modal-actions">
+                    <button id="copyImageModalBtn" class="modal-action-btn copy-btn" title="Copy to clipboard">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                    </button>
+                    <button id="downloadImageBtn" class="modal-action-btn download-btn" title="Download">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </div>

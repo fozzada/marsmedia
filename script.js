@@ -25,11 +25,10 @@ class MarsMediaGallery {
         // Image view modal elements
         this.imageViewModal = document.getElementById('imageViewModal');
         this.closeImageModal = document.getElementById('closeImageModal');
-        this.imageModalTitle = document.getElementById('imageModalTitle');
-        this.imageModalMeta = document.getElementById('imageModalMeta');
         this.imageModalImg = document.getElementById('imageModalImg');
         this.imageModalTags = document.getElementById('imageModalTags');
         this.downloadImageBtn = document.getElementById('downloadImageBtn');
+        this.copyImageModalBtn = document.getElementById('copyImageModalBtn');
         
         // Text to overlay
         this.contractAddress = 'Cfmo6asAsZFx6GGQvAt4Ajxn8hN6vgWGpaSrjQKRpump';
@@ -55,6 +54,7 @@ class MarsMediaGallery {
         // Image view modal
         this.closeImageModal.addEventListener('click', () => this.closeImageModalHandler());
         this.downloadImageBtn.addEventListener('click', () => this.downloadCurrentImage());
+        this.copyImageModalBtn.addEventListener('click', () => this.copyCurrentImage());
         
         // Close modal on outside click
         this.imageViewModal.addEventListener('click', (e) => {
@@ -238,35 +238,33 @@ class MarsMediaGallery {
         
         // Add click listeners to image items
         this.imagesGrid.querySelectorAll('.image-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const imageId = parseInt(item.dataset.imageId);
+            item.addEventListener('click', (e) => {
+                console.log('Image clicked:', item.dataset.imageId);
+                const imageId = item.dataset.imageId; // Keep as string, don't parse as int
                 this.openImageModal(imageId);
             });
         });
     }
     
     openImageModal(imageId) {
+        console.log('Opening modal for image ID:', imageId);
         const image = this.allImages.find(img => img.id === imageId);
-        if (!image) return;
+        if (!image) {
+            console.log('Image not found:', imageId);
+            return;
+        }
+        console.log('Found image:', image);
         
         this.currentImage = image;
-        this.imageModalTitle.textContent = image.name;
+        // Use full-size image URL in modal (not thumbnail)
         this.imageModalImg.src = image.url;
         
-        const uploadDate = new Date(image.original_upload_date || image.approved_at).toLocaleDateString();
-        this.imageModalMeta.textContent = `Uploaded: ${uploadDate}`;
-        
-        // Display tags
+        // Display tags in minimal overlay
         const imageTags = image.image_tags?.map(it => it.tags?.name).filter(Boolean) || [];
         if (imageTags.length > 0) {
-            this.imageModalTags.innerHTML = `
-                <h4>Tags:</h4>
-                <div class="image-tags-list">
-                    ${imageTags.map(tag => `<span class="tag-pill-small">${tag}</span>`).join('')}
-                </div>
-            `;
+            this.imageModalTags.innerHTML = imageTags.map(tag => `<span class="tag-pill-small">${tag}</span>`).join('');
         } else {
-            this.imageModalTags.innerHTML = '<div class="no-data">No tags</div>';
+            this.imageModalTags.innerHTML = '';
         }
         
         this.imageViewModal.style.display = 'block';
@@ -280,6 +278,12 @@ class MarsMediaGallery {
     downloadCurrentImage() {
         if (this.currentImage) {
             this.downloadImageDirect(this.currentImage.url, this.currentImage.name);
+        }
+    }
+    
+    copyCurrentImage() {
+        if (this.currentImage) {
+            this.copyImageToClipboard(this.currentImage.url);
         }
     }
     

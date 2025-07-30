@@ -465,80 +465,121 @@ body {
     height: 100%;  
     background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
-.modal-content {
+.modal-content-minimal {
+    position: relative;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.1) 100%);
     backdrop-filter: blur(20px);
-    margin: 2% auto;
     border-radius: 20px;
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
-    position: relative;
     border: 1px solid rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    flex-direction: column;
+    max-width: 90vw;
+    max-height: 90vh;
+    min-width: 400px;
+    overflow: hidden;
 }
 
-.close {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    z-index: 1001;
-    transition: color 0.3s ease;
+.modal-image-full {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.1);
 }
 
-.close:hover {
-    color: white;
-}
-
-.modal-header {
-    padding: 30px 30px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modal-header h3 {
-    margin-bottom: 10px;
-    color: rgba(255, 255, 255, 0.95);
-    word-break: break-word;
-}
-
-.modal-meta {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
-}
-
-.modal-body {
-    padding: 30px;
-}
-
-.modal-image-container {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.modal-image-container img {
+.modal-image-full img {
     max-width: 100%;
-    max-height: 400px;
+    max-height: 70vh;
+    object-fit: contain;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.image-tags-display {
-    margin-bottom: 20px;
+.modal-overlay-info {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.image-tags-display h4 {
-    margin-bottom: 10px;
-    color: rgba(255, 255, 255, 0.9);
+.modal-tags {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-end;
 }
 
-.modal-footer {
-    text-align: center;
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.modal-action-btn {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    color: #333;
+}
+
+.modal-action-btn:hover {
+    background: white;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.modal-action-btn.copy-btn:hover {
+    color: #8c85ff;
+}
+
+.modal-action-btn.download-btn:hover {
+    color: #4CAF50;
+}
+
+.close {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 32px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all 0.3s ease;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.close:hover {
+    color: white;
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
 }
 
 /* Loading and States */
@@ -615,14 +656,29 @@ body {
         width: 200px;
     }
 
-    .modal-content {
-        width: 95%;
-        margin: 5% auto;
+    .modal-content-minimal {
+        width: 95vw;
+        height: 85vh;
     }
-
-    .modal-header,
-    .modal-body {
-        padding: 20px;
+    
+    .modal-overlay-info {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 20px 15px 20px;
+    }
+    
+    .modal-tags {
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .close {
+        top: 15px;
+        right: 15px;
+        font-size: 28px;
+        width: 40px;
+        height: 40px;
     }
 }
 
