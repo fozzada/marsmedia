@@ -27,7 +27,6 @@ class MarsMediaGallery {
         this.imageModalImg = document.getElementById('imageModalImg');
         this.imageModalTags = document.getElementById('imageModalTags');
         this.downloadImageBtn = document.getElementById('downloadImageBtn');
-        this.copyImageModalBtn = document.getElementById('copyImageModalBtn');
         
         // Text to overlay
         this.contractAddress = 'Cfmo6asAsZFx6GGQvAt4Ajxn8hN6vgWGpaSrjQKRpump';
@@ -53,7 +52,6 @@ class MarsMediaGallery {
         // Image view modal
         this.closeImageModal.addEventListener('click', () => this.closeImageModalHandler());
         this.downloadImageBtn.addEventListener('click', () => this.downloadCurrentImage());
-        this.copyImageModalBtn.addEventListener('click', () => this.copyCurrentImage());
         
         // Close modal on outside click
         this.imageViewModal.addEventListener('click', (e) => {
@@ -213,11 +211,6 @@ class MarsMediaGallery {
                     <div class="image-container">
                         <img src="${displayUrl}" alt="${image.name}" loading="lazy">
                         <div class="image-actions">
-                            <button class="action-icon copy-btn" onclick="event.stopPropagation(); marsGallery.copyImageToClipboard('${image.url}')" title="Copy to clipboard">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-                                </svg>
-                            </button>
                             <button class="action-icon download-btn" onclick="event.stopPropagation(); marsGallery.downloadImageDirect('${image.url}', '${image.name}')" title="Download">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
@@ -274,12 +267,6 @@ class MarsMediaGallery {
     downloadCurrentImage() {
         if (this.currentImage) {
             this.downloadImageDirect(this.currentImage.url, this.currentImage.name);
-        }
-    }
-    
-    copyCurrentImage() {
-        if (this.currentImage) {
-            this.copyImageToClipboard(this.currentImage.url);
         }
     }
     
